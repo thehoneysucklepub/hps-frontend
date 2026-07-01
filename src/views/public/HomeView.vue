@@ -74,7 +74,7 @@
     <div style="height:2px;background:linear-gradient(90deg,transparent,rgba(245,197,24,0.5) 30%,rgba(245,197,24,0.8) 50%,rgba(245,197,24,0.5) 70%,transparent);"></div>
 
     <!-- Stats bar -->
-    <div style="display:grid;grid-template-columns:repeat(4,1fr);background:#111111;border-bottom:1px solid #1E1E1E;">
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(80px,1fr));background:#111111;border-bottom:1px solid #1E1E1E;">
       <div
         v-for="(stat, i) in statBar"
         :key="stat.label"
@@ -196,7 +196,7 @@
         </div>
 
         <!-- Main two-column layout -->
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:24px;align-items:start;margin-bottom:24px;">
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:16px;align-items:start;margin-bottom:16px;">
 
           <!-- Left: How it works -->
           <div style="background:#111111;border:1px solid #1E1E1E;border-radius:20px;padding:40px;">
@@ -275,10 +275,10 @@
           <!-- Subtle gold radial inside card -->
           <div style="position:absolute;inset:0;background:radial-gradient(ellipse at 80% 50%,rgba(245,197,24,0.04) 0%,transparent 60%);pointer-events:none;"></div>
 
-          <div style="display:grid;grid-template-columns:1fr 1fr;gap:0;align-items:center;padding:52px 48px;">
+          <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:32px;align-items:start;padding:36px 28px;">
 
             <!-- Left text side -->
-            <div style="padding-right:48px;border-right:1px solid #1E1E1E;">
+            <div style="padding-right:0;">
               <div style="display:inline-flex;align-items:center;gap:6px;background:rgba(245,197,24,0.08);border:1px solid rgba(245,197,24,0.2);border-radius:6px;padding:4px 12px;margin-bottom:20px;">
                 <v-icon size="13" color="primary">mdi-star-four-points</v-icon>
                 <span style="font-size:10px;color:#F5C518;letter-spacing:2px;text-transform:uppercase;font-weight:700;">Premium</span>
@@ -308,7 +308,7 @@
             </div>
 
             <!-- Right: perks list -->
-            <div style="padding-left:48px;">
+            <div style="padding-left:0;">
               <div style="font-size:11px;color:#555;letter-spacing:2px;text-transform:uppercase;margin-bottom:20px;">What you get</div>
               <div style="display:flex;flex-direction:column;gap:16px;">
                 <div v-for="perk in perks" :key="perk" style="display:flex;align-items:center;gap:12px;">
@@ -333,7 +333,7 @@
         </div>
 
         <!-- Bottom CTA strip -->
-        <div style="margin-top:24px;background:#111111;border:1px solid #1E1E1E;border-radius:16px;padding:32px 40px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:20px;">
+        <div style="margin-top:16px;background:#111111;border:1px solid #1E1E1E;border-radius:16px;padding:24px;display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:16px;">
           <div>
             <div style="font-size:18px;font-weight:800;margin-bottom:4px;">Free to join. Instant rewards.</div>
             <div style="font-size:13px;color:#555;">No credit card needed — start earning points on your very next visit.</div>
