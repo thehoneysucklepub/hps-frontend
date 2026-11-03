@@ -7,18 +7,12 @@
 
           <!-- Logo -->
           <div class="text-center mb-8">
-            <div
-              style="width:64px;height:64px;background:#F5C518;border-radius:16px;
-                     display:inline-flex;align-items:center;justify-content:center;
-                     margin-bottom:16px;"
-            >
-              <span style="color:#0A0A0A;font-weight:900;font-size:28px;">H</span>
-            </div>
-            <div style="color:#F5C518;font-weight:800;font-size:24px;letter-spacing:2px;">
-              HPS
-            </div>
-            <div style="color:#888;font-size:13px;margin-top:4px;">
-              The Honeysuckle Pub
+            <router-link to="/" aria-label="The Honeysuckle Pub website">
+              <img src="/brand/logo.webp" alt="The Honeysuckle Pub" width="132" height="132"
+                   style="width:132px;height:auto;margin-bottom:10px;" />
+            </router-link>
+            <div style="color:#888;font-size:13px;letter-spacing:1px;text-transform:uppercase;">
+              Staff area
             </div>
           </div>
 
@@ -94,10 +88,6 @@
               </v-btn>
             
             </v-form>
-            <div class="text-center mt-4" style="font-size:13px;color:#888;">
-  Don't have an account?
-  <router-link to="/register" style="color:#F5C518;text-decoration:none;font-weight:600;">Create one</router-link>
-</div>
           </v-card>
 
           <!-- Footer -->
@@ -140,7 +130,7 @@ async function handleLogin() {
 
   try {
     await auth.login(form.value)
-    const redirect = route.query.redirect || (auth.isAdmin ? '/admin' : '/')
+    const redirect = route.query.redirect || ((auth.isAdmin || auth.isStaff) ? '/admin' : '/')
     router.push(redirect)
   } catch (err) {
     error.value = err.response?.data?.error || 'Invalid credentials'

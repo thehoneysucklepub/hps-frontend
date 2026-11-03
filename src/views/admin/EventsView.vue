@@ -213,7 +213,7 @@
             </div>
             <div class="d-flex align-center ga-1 mb-4" style="font-size:12px;color:#888;">
               <v-icon size="12">mdi-calendar</v-icon>
-              {{ formatDate(event.date_start) }}
+              {{ whenLabel(event) }}
               <span v-if="event.time_local"> • {{ event.time_local }}</span>
             </div>
             <div class="d-flex ga-2">
@@ -280,7 +280,7 @@
               {{ event.branch_name || 'Global' }}
             </td>
             <td style="padding:12px 16px;font-size:13px;color:#888;">
-              {{ formatDate(event.date_start) }}
+              {{ whenLabel(event) }}
               <span v-if="event.time_local" style="color:#555;"> {{ event.time_local }}</span>
             </td>
             <td style="padding:12px 16px;">
@@ -353,10 +353,21 @@
                 class="mb-3"
               />
             </v-col>
+            <v-col cols="12">
+              <v-btn-toggle v-model="form.recurrence" mandatory density="compact" color="primary" class="mb-3" divided>
+                <v-btn value="weekly">Weekly line-up</v-btn>
+                <v-btn value="none">One-off date</v-btn>
+              </v-btn-toggle>
+            </v-col>
+            <v-col v-if="isWeekly" cols="12">
+              <v-chip-group v-model="form.days_of_week" multiple column selected-class="text-primary" class="mb-2">
+                <v-chip v-for="d in dayOptions" :key="d.value" :value="d.value" filter variant="outlined">{{ d.title }}</v-chip>
+              </v-chip-group>
+            </v-col>
             <v-col cols="6">
               <v-select
                 v-model="form.event_type"
-                :items="['match','promo','special']"
+                :items="typeOptions"
                 label="Type *"
                 hide-details
                 density="compact"
@@ -400,7 +411,7 @@
             <v-col cols="6">
               <v-text-field
                 v-model="form.date_start"
-                label="Date *"
+                :label="isWeekly ? 'Runs from *' : 'Date *'"
                 type="date"
                 hide-details
                 density="compact"
@@ -411,7 +422,7 @@
             <v-col cols="6">
               <v-text-field
                 v-model="form.time_local"
-                label="Time"
+                label="Starts"
                 type="time"
                 hide-details
                 density="compact"
@@ -419,7 +430,49 @@
                 class="mb-3"
               />
             </v-col>
+            <v-col cols="6">
+              <v-text-field
+                v-model="form.time_end"
+                label="Ends (empty = till late)"
+                type="time"
+                hide-details
+                density="compact"
+                bg-color="#1A1A1A"
+                class="mb-3"
+              />
+            </v-col>
+            <v-col cols="6">
+              <v-text-field
+                v-model="form.area"
+                label="Area (e.g. Upstairs, Smoking area)"
+                hide-details
+                density="compact"
+                bg-color="#1A1A1A"
+                class="mb-3"
+              />
+            </v-col>
+            <v-col cols="6">
+              <v-text-field
+                v-model="form.badge"
+                label="Label (e.g. DJ, Live band, Offer)"
+                hide-details
+                density="compact"
+                bg-color="#1A1A1A"
+                class="mb-3"
+              />
+            </v-col>
             <v-col cols="12">
+              <v-textarea
+                v-model="form.description"
+                label="Description"
+                rows="2"
+                hide-details
+                density="compact"
+                bg-color="#1A1A1A"
+                class="mb-3"
+              />
+            </v-col>
+            <v-col v-if="!isWeekly" cols="12">
               <v-text-field
                 v-model="form.venue_or_city"
                 label="Venue / City"
@@ -543,10 +596,11 @@ const snackbar = ref({ show: false, text: '', color: 'success' })
 
 function defaultForm() {
   return {
-    title: '', event_type: 'match', status: 'scheduled',
-    branch_id: null, league_or_category: '', date_start: '',
-    time_local: '', venue_or_city: '', image_url: '',
-    featured: false, is_global: false
+    title: '', event_type: 'lineup', status: 'scheduled',
+    branch_id: null, league_or_category: '', date_start: new Date().toISOString().slice(0, 10),
+    time_local: '', time_end: '', venue_or_city: '', image_url: '',
+    featured: false, is_global: false,
+    recurrence: 'weekly', days_of_week: [], area: '', badge: '', description: ''
   }
 }
 
@@ -565,7 +619,25 @@ const branchOptions = computed(() =>
 )
 
 const statusOptions = ['scheduled', 'live', 'finished', 'cancelled']
-const typeOptions   = ['match', 'promo', 'special']
+const typeOptions   = [
+  { title: 'Line-up (DJ, band, karaoke)', value: 'lineup' },
+  { title: 'Offer / promo', value: 'promo' },
+  { title: 'Special event', value: 'special' },
+  { title: 'Sports match', value: 'match' },
+]
+const dayOptions = [
+  { title: 'Mon', value: 1 }, { title: 'Tue', value: 2 }, { title: 'Wed', value: 3 },
+  { title: 'Thu', value: 4 }, { title: 'Fri', value: 5 }, { title: 'Sat', value: 6 }, { title: 'Sun', value: 0 },
+]
+const isWeekly = computed(() => form.value.recurrence === 'weekly')
+const DAY_SHORT = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
+// Weekly line-ups show their days ("Every Fri"), one-off events their date
+function whenLabel(event) {
+  if (event.recurrence === 'weekly') {
+    return 'Every ' + (event.days_of_week || []).map(d => DAY_SHORT[d]).join(', ')
+  }
+  return formatDate(event.date_start)
+}
 
 let debounceTimer = null
 function debouncedFetch() {
@@ -611,7 +683,13 @@ function openEdit(event) {
     venue_or_city: event.venue_or_city || '',
     image_url: event.image_url || '',
     featured: event.featured,
-    is_global: event.is_global
+    is_global: event.is_global,
+    recurrence: event.recurrence || 'none',
+    days_of_week: [...(event.days_of_week || [])],
+    time_end: event.time_end || '',
+    area: event.area || '',
+    badge: event.badge || '',
+    description: event.description || ''
   }
   formError.value = null
   dialog.value = true
@@ -628,14 +706,23 @@ async function saveEvent() {
     formError.value = 'Title and date are required'
     return
   }
+  if (isWeekly.value && !form.value.days_of_week.length) {
+    formError.value = 'Choose at least one day for a weekly line-up'
+    return
+  }
+  // The API stores days as "5,6"; one-off events have none
+  const payload = {
+    ...form.value,
+    days_of_week: isWeekly.value ? [...form.value.days_of_week].sort().join(',') : null,
+  }
   saving.value = true
   formError.value = null
   try {
     if (editingEvent.value) {
-      await store.updateEvent(editingEvent.value.id, form.value)
+      await store.updateEvent(editingEvent.value.id, payload)
       showSnack('Event updated successfully')
     } else {
-      await store.createEvent(form.value)
+      await store.createEvent(payload)
       showSnack('Event created successfully')
     }
     closeDialog()

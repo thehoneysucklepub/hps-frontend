@@ -1,5 +1,6 @@
 // Pings the API every 14 minutes to keep Render awake
-const PING_URL = `${import.meta.env.VITE_API_BASE_URL}/health`
+import { API_BASE } from './api'
+const PING_URL = `${API_BASE}/health`
 const INTERVAL = 14 * 60 * 1000 // 14 minutes
 
 let timer = null
