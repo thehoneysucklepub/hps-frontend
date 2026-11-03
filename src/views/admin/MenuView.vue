@@ -98,34 +98,61 @@
 
       <!-- PDFs -->
       <v-window-item value="pdfs">
-        <div class="d-flex justify-end mb-4">
-          <v-btn color="primary" size="small" prepend-icon="mdi-plus" style="color:#0A0A0A;" @click="openPdfDialog">
-            Add PDF
+        <div class="d-flex align-center justify-space-between flex-wrap ga-3 mb-4">
+          <div style="font-size:12px;color:#999;max-width:620px;">
+            The website shows each menu in its PDF reader and lets guests download it. Keep a
+            <b>stored copy</b> on our server (upload a PDF, or copy it from the Google Drive link) so it always works.
+          </div>
+          <v-btn color="primary" size="small" prepend-icon="mdi-plus" style="color:#0A0A0A;font-weight:700;" @click="openPdfDialog()">
+            Add menu PDF
           </v-btn>
         </div>
         <v-row>
-          <v-col v-for="pdf in pdfs" :key="pdf.id" cols="12" sm="6" md="4">
+          <v-col v-for="pdf in pdfs" :key="pdf.id" cols="12" md="6">
             <v-card style="background:#111111;border:1px solid #2A2A2A;" class="pa-4">
-              <div class="d-flex align-center ga-3 mb-3">
-                <v-avatar color="error" variant="tonal" size="40">
+              <div class="d-flex align-start ga-3 mb-3">
+                <v-avatar color="error" variant="tonal" size="42" rounded="lg">
                   <v-icon>mdi-file-pdf-box</v-icon>
                 </v-avatar>
-                <div>
-                  <div style="font-size:14px;font-weight:600;">{{ pdf.title }}</div>
-                  <v-chip size="x-small" :color="pdf.pdf_type === 'food' ? 'success' : 'info'" variant="tonal">
-                    {{ pdf.pdf_type }}
-                  </v-chip>
+                <div style="flex:1;min-width:0;">
+                  <div class="d-flex align-center ga-2 flex-wrap">
+                    <span style="font-size:15px;font-weight:700;">{{ pdf.title }}</span>
+                    <v-chip size="x-small" :color="pdf.pdf_type === 'food' ? 'success' : 'info'" variant="tonal">{{ pdf.pdf_type }}</v-chip>
+                    <v-chip v-if="!pdf.active" size="x-small" color="warning" variant="tonal">Hidden</v-chip>
+                  </div>
+                  <div style="font-size:12px;margin-top:6px;">
+                    <span v-if="pdf.stored" style="color:#6BCB77;">
+                      <v-icon size="14" color="#6BCB77">mdi-check-circle</v-icon>
+                      Stored copy · {{ fileSize(pdf.file.byte_size) }} · {{ shortDate(pdf.file.updated_at) }}
+                    </span>
+                    <span v-else style="color:#F5A623;">
+                      <v-icon size="14" color="#F5A623">mdi-alert</v-icon>
+                      Link only: shown with Google's viewer. Copy or upload it to store it here.
+                    </span>
+                  </div>
+                  <div v-if="pdf.file_url" style="font-size:11px;color:#777;margin-top:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" :title="pdf.file_url">
+                    Link: {{ pdf.file_url }}
+                  </div>
                 </div>
               </div>
-              <div class="d-flex ga-2">
-                <v-btn variant="tonal" color="primary" size="small" :href="pdf.file_url" target="_blank" prepend-icon="mdi-open-in-new" style="flex:1;">
-                  View
+              <div class="d-flex flex-wrap ga-2">
+                <v-btn variant="tonal" size="small" prepend-icon="mdi-eye" :href="pdf.file ? pdf.file.view_url : (pdf.preview_url || pdf.file_url)" target="_blank">Preview</v-btn>
+                <v-btn variant="tonal" size="small" prepend-icon="mdi-download" :href="pdf.download_url">Download</v-btn>
+                <v-btn variant="tonal" size="small" prepend-icon="mdi-file-upload" :loading="busyId === `u${pdf.id}`" @click="pickPdf(pdf)">
+                  {{ pdf.stored ? 'Replace PDF' : 'Upload PDF' }}
                 </v-btn>
-                <v-btn variant="tonal" color="error" size="small" icon="mdi-delete" @click="deletePdf(pdf)" />
+                <v-btn v-if="pdf.file_url" variant="tonal" size="small" prepend-icon="mdi-cloud-download" :loading="busyId === `f${pdf.id}`" @click="fetchPdf(pdf)">
+                  {{ pdf.stored ? 'Re-copy from link' : 'Copy from link' }}
+                </v-btn>
+                <v-spacer />
+                <v-btn variant="text" size="small" icon="mdi-pencil" color="primary" title="Edit" @click="openPdfDialog(pdf)" />
+                <v-btn variant="text" size="small" icon="mdi-delete" color="error" title="Delete" @click="deletePdf(pdf)" />
               </div>
             </v-card>
           </v-col>
         </v-row>
+        <div v-if="!pdfs.length" class="text-center pa-12" style="color:#555;">No menu PDFs yet</div>
+        <input ref="pdfInput" type="file" accept="application/pdf" hidden @change="onPdfPicked" />
       </v-window-item>
 
     </v-window>
@@ -174,25 +201,37 @@
     </v-dialog>
 
     <!-- PDF Dialog -->
-    <v-dialog v-model="pdfDialog" max-width="400" persistent>
+    <v-dialog v-model="pdfDialog" max-width="480" persistent>
       <v-card style="background:#111111;border:1px solid #2A2A2A;">
         <div class="d-flex align-center justify-space-between pa-5 pb-4" style="border-bottom:1px solid #2A2A2A;">
-          <div style="font-size:17px;font-weight:700;">Add Menu PDF</div>
+          <div style="font-size:17px;font-weight:700;">{{ editingPdf ? 'Edit menu PDF' : 'Add menu PDF' }}</div>
           <v-btn icon="mdi-close" variant="text" size="small" @click="pdfDialog = false" />
         </div>
         <div class="pa-5">
-          <v-text-field v-model="pdfForm.title" label="Title *" hide-details density="compact" bg-color="#1A1A1A" class="mb-3" />
-          <v-text-field v-model="pdfForm.file_url" label="PDF URL *" hide-details density="compact" bg-color="#1A1A1A" class="mb-3" />
-          <v-select v-model="pdfForm.pdf_type" :items="['food','drinks']" label="Type *" hide-details density="compact" bg-color="#1A1A1A" />
+          <v-text-field v-model="pdfForm.title" label="Title *" placeholder="e.g. Food Menu" hide-details density="compact" bg-color="#1A1A1A" class="mb-3" />
+          <v-row dense class="mb-1">
+            <v-col cols="6">
+              <v-select v-model="pdfForm.pdf_type" :items="['food','drinks']" label="Type *" hide-details density="compact" bg-color="#1A1A1A" />
+            </v-col>
+            <v-col cols="6">
+              <v-text-field v-model.number="pdfForm.position" type="number" label="Order" hide-details density="compact" bg-color="#1A1A1A" />
+            </v-col>
+          </v-row>
+          <v-text-field v-model="pdfForm.file_url" label="Google Drive (or other) link" placeholder="https://drive.google.com/file/d/…/view" hide-details density="compact" bg-color="#1A1A1A" class="mt-2" />
+          <div style="font-size:11px;color:#777;margin:4px 0 12px;">The Drive file must be shared as "Anyone with the link".</div>
+          <v-file-input v-model="pdfFile" accept="application/pdf" :label="editingPdf?.stored ? 'Replace with a PDF file (optional)' : 'Or upload the PDF file'" prepend-icon="" prepend-inner-icon="mdi-file-pdf-box" hide-details density="compact" bg-color="#1A1A1A" class="mb-3" />
+          <v-switch v-if="!pdfFile && pdfForm.file_url && !editingPdf" v-model="pdfForm.store_copy" label="Also store a copy from the link now" color="primary" hide-details density="compact" />
+          <v-switch v-model="pdfForm.active" label="Shown on website" color="primary" hide-details density="compact" />
+          <v-alert v-if="pdfError" type="error" variant="tonal" density="compact" class="mt-3">{{ pdfError }}</v-alert>
         </div>
         <div class="d-flex justify-end ga-2 pa-5 pt-0">
           <v-btn variant="text" @click="pdfDialog = false">Cancel</v-btn>
-          <v-btn color="primary" :loading="saving" style="color:#0A0A0A;font-weight:700;" @click="savePdf">Add PDF</v-btn>
+          <v-btn color="primary" :loading="saving" style="color:#0A0A0A;font-weight:700;" @click="savePdf">{{ editingPdf ? 'Save' : 'Add PDF' }}</v-btn>
         </div>
       </v-card>
     </v-dialog>
 
-    <v-snackbar v-model="snackbar.show" :color="snackbar.color" timeout="3000" location="top right">
+    <v-snackbar v-model="snackbar.show" :color="snackbar.color" timeout="5000" location="top right">
       {{ snackbar.text }}
     </v-snackbar>
   </div>
@@ -200,7 +239,7 @@
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
-import api from '@/services/api'
+import api, { uploadFile, errorText } from '@/services/api'
 
 const tab        = ref('food')
 const categories = ref([])
@@ -217,7 +256,17 @@ const editingItem     = ref(null)
 
 const categoryForm = ref({ name: '', menu_type: 'food' })
 const itemForm     = ref({ menu_category_id: null, name: '', description: '', price: '', available: true })
-const pdfForm      = ref({ title: '', file_url: '', pdf_type: 'food' })
+const pdfForm      = ref(blankPdf())
+const pdfFile      = ref(null)
+const pdfError     = ref('')
+const editingPdf   = ref(null)
+const busyId       = ref('')
+const pdfInput     = ref(null)
+let pickTarget     = null
+
+function blankPdf() {
+  return { title: '', file_url: '', pdf_type: 'food', position: 0, active: true, store_copy: true }
+}
 
 const categoryOptions = computed(() =>
   categories.value.map(c => ({ title: `${c.name} (${c.menu_type})`, value: c.id }))
@@ -257,8 +306,13 @@ function editItem(item, category) {
   itemDialog.value = true
 }
 
-function openPdfDialog() {
-  pdfForm.value = { title: '', file_url: '', pdf_type: 'food' }
+function openPdfDialog(pdf = null) {
+  editingPdf.value = pdf
+  pdfForm.value = pdf
+    ? { title: pdf.title, file_url: pdf.file_url || '', pdf_type: pdf.pdf_type, position: pdf.position || 0, active: pdf.active, store_copy: false }
+    : { ...blankPdf(), position: pdfs.value.length }
+  pdfFile.value = null
+  pdfError.value = ''
   pdfDialog.value = true
 }
 
@@ -320,27 +374,87 @@ async function deleteItem(item) {
 }
 
 async function savePdf() {
-  if (!pdfForm.value.title || !pdfForm.value.file_url) return
+  const f = pdfForm.value
+  const file = Array.isArray(pdfFile.value) ? pdfFile.value[0] : pdfFile.value
+  if (!f.title) { pdfError.value = 'Add a title'; return }
+  if (!f.file_url && !file && !editingPdf.value?.stored) { pdfError.value = 'Add a link or choose a PDF file'; return }
   saving.value = true
+  pdfError.value = ''
   try {
-    await api.post('/menu_pdfs', pdfForm.value)
+    const fields = { title: f.title, file_url: f.file_url || '', pdf_type: f.pdf_type, position: f.position || 0, active: f.active }
+    const url = editingPdf.value ? `/menu_pdfs/${editingPdf.value.id}` : '/menu_pdfs'
+    const method = editingPdf.value ? 'put' : 'post'
+    let res
+    if (file) {
+      res = await uploadFile(url, file, fields, method)
+    } else {
+      res = await api.request({ url, method, data: { ...fields, store_copy: !editingPdf.value && f.store_copy && !!f.file_url } })
+    }
     pdfDialog.value = false
-    showSnack('PDF added')
+    if (res.data.warning) showSnack(res.data.warning, 'warning')
+    else showSnack(editingPdf.value ? 'Menu updated' : 'Menu added')
     fetchMenu()
+  } catch (err) {
+    pdfError.value = errorText(err, 'Could not save the menu')
   } finally {
     saving.value = false
   }
 }
 
+function pickPdf(pdf) {
+  pickTarget = pdf
+  pdfInput.value?.click()
+}
+
+async function onPdfPicked(e) {
+  const file = e.target.files?.[0]
+  e.target.value = ''
+  if (!file || !pickTarget) return
+  if (file.size > 25 * 1024 * 1024) { showSnack('PDF is too large (max 25 MB)', 'error'); return }
+  const pdf = pickTarget
+  busyId.value = `u${pdf.id}`
+  try {
+    await uploadFile(`/menu_pdfs/${pdf.id}/upload`, file)
+    showSnack(`${pdf.title}: PDF stored`)
+    fetchMenu()
+  } catch (err) {
+    showSnack(errorText(err, 'Upload failed'), 'error')
+  } finally {
+    busyId.value = ''
+  }
+}
+
+async function fetchPdf(pdf) {
+  busyId.value = `f${pdf.id}`
+  try {
+    await api.post(`/menu_pdfs/${pdf.id}/fetch`, null, { timeout: 120000 })
+    showSnack(`${pdf.title}: copied from the link`)
+    fetchMenu()
+  } catch (err) {
+    showSnack(errorText(err, 'Could not copy the PDF'), 'error')
+  } finally {
+    busyId.value = ''
+  }
+}
+
 async function deletePdf(pdf) {
-  if (!confirm(`Delete "${pdf.title}"?`)) return
+  if (!confirm(`Delete "${pdf.title}"? Its stored PDF is deleted too.`)) return
   try {
     await api.delete(`/menu_pdfs/${pdf.id}`)
-    showSnack('PDF deleted', 'error')
+    showSnack('Menu deleted', 'error')
     fetchMenu()
-  } catch {
-    showSnack('Failed to delete', 'error')
+  } catch (err) {
+    showSnack(errorText(err, 'Failed to delete'), 'error')
   }
+}
+
+function fileSize(bytes) {
+  if (!bytes) return ''
+  return bytes > 1024 * 1024 ? `${(bytes / 1024 / 1024).toFixed(1)} MB` : `${Math.max(1, Math.round(bytes / 1024))} KB`
+}
+
+function shortDate(d) {
+  return d ? new Date(d).toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' }) : ''
 }
 
 async function fetchMenu() {
@@ -348,7 +462,7 @@ async function fetchMenu() {
   try {
     const [catRes, pdfRes] = await Promise.all([
       api.get('/menu_categories'),
-      api.get('/menu_pdfs')
+      api.get('/menu_pdfs', { params: { all: 'true' } })
     ])
     categories.value = catRes.data.menu_categories
     pdfs.value       = pdfRes.data.menu_pdfs

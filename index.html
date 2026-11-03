@@ -1,10 +1,18 @@
 <!DOCTYPE html>
-<html lang="">
+<html lang="en">
   <head>
+    <!-- Vuetify's CSS layer order, declared before any stylesheet so the base
+         reset never overrides component styles (admin buttons, inputs) -->
+    <style>@layer vuetify-core, vuetify-components, vuetify-overrides, vuetify-utilities, vuetify-final;</style>
     <meta charset="UTF-8">
-    <link rel="icon" href="/fav.png" type="image/png">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>The honeysucklepub</title>
+    <title>The Honeysuckle Pub | Sports Bar, Pub &amp; Restaurant in Accra</title>
+    <meta name="description" content="The Honeysuckle Pub: sports bars, pubs and restaurants across Accra. Weekly DJs, live bands, karaoke, food and drinks at Osu, East Legon, Labone, Airport and Spintex.">
+    <meta name="theme-color" content="#0B0A07">
+    <link rel="icon" href="/fav.png" type="image/png">
+    <meta property="og:title" content="The Honeysuckle Pub">
+    <meta property="og:description" content="Sports bar, pub and restaurant across Accra.">
+    <meta property="og:image" content="/brand/logo.png">
   </head>
   <body>
     <div id="app"></div>

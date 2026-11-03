@@ -248,8 +248,15 @@
             bg-color="#1A1A1A" class="mb-3" />
           <v-select v-model="form.media_type" :items="['image','video']" label="Type *"
             hide-details density="compact" bg-color="#1A1A1A" class="mb-3" />
-          <v-text-field v-model="form.file_url" label="File URL *" hide-details density="compact"
-            bg-color="#1A1A1A" class="mb-3" />
+          <div class="d-flex align-center ga-2 mb-3">
+            <v-text-field v-model="form.file_url" label="File *" placeholder="Upload, or paste a link" hide-details density="compact"
+              bg-color="#1A1A1A" style="flex:1;" clearable />
+            <UploadButton v-if="form.media_type === 'image'" label="Upload photo"
+              @uploaded="onUploaded" @error="msg => showSnack(msg, 'error')" />
+          </div>
+          <div v-if="form.media_type === 'image'" style="font-size:11px;color:#777;margin:-6px 0 12px;">
+            Photos are saved on our server (JPG, PNG, WebP, max 8 MB). Choose the branch so it shows in that venue's gallery.
+          </div>
           <v-text-field v-model="form.thumbnail_url" label="Thumbnail URL" hide-details density="compact"
             bg-color="#1A1A1A" class="mb-3" />
           <v-select v-model="form.branch_id" :items="branchOptions" label="Branch"
@@ -297,7 +304,8 @@
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
-import api from '@/services/api'
+import api, { errorText } from '@/services/api'
+import UploadButton from '@/components/admin/UploadButton.vue'
 
 const allMedia      = ref([])
 const groupedMedia  = ref([])
@@ -353,6 +361,11 @@ async function fetchMedia() {
   }
 }
 
+function onUploaded(url, file) {
+  form.value.file_url = url
+  if (!form.value.title && file?.filename) form.value.title = file.filename.replace(/\.[a-z0-9]+$/i, '').replace(/[-_]+/g, ' ')
+}
+
 async function saveMedia() {
   if (!form.value.file_url) return
   saving.value = true
@@ -361,8 +374,8 @@ async function saveMedia() {
     dialog.value = false
     showSnack('Media added successfully')
     fetchMedia()
-  } catch {
-    showSnack('Failed to add media', 'error')
+  } catch (err) {
+    showSnack(errorText(err, 'Failed to add media'), 'error')
   } finally {
     saving.value = false
   }

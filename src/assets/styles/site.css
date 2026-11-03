@@ -1,0 +1,227 @@
+/* ==========================================================================
+   Honeysuckle public website
+   Layout language after sportlondon.com (slanted panels, bold italic caps),
+   coloured with the Honeysuckle logo: black, antique gold, cream.
+   Everything is prefixed hs- so it never collides with the admin (Vuetify).
+   ========================================================================== */
+
+:root {
+  --hs-ink: #0B0A07;
+  --hs-ink-2: #15130D;
+  --hs-panel: rgba(23, 21, 14, 0.78);
+  --hs-panel-solid: #1B1810;
+  --hs-line: rgba(239, 227, 179, 0.14);
+  --hs-gold: #C9A83B;          /* from the logo #B9A030, lifted for contrast */
+  --hs-gold-2: #E0C25A;
+  --hs-cream: #EFE3B3;         /* logo cream */
+  --hs-text: #F6F1E1;
+  --hs-muted: #B7AE93;
+  --hs-on-gold: #0B0A07;
+
+  --hs-font: 'Sora', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  --hs-wrap: 1240px;
+  --hs-gutter: clamp(16px, 4vw, 40px);
+  --hs-gap: clamp(48px, 7vw, 96px);
+  --hs-slant: polygon(3% 0, 100% 0, 97% 100%, 0 100%);
+  --hs-ease: cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.hs-site {
+  min-height: 100vh;
+  font-family: var(--hs-font);
+  color: var(--hs-text);
+  font-size: 15px;
+  line-height: 1.65;
+  /* deep olive → black, the warm counterpart of the reference teal → navy */
+  background:
+    radial-gradient(1200px 700px at 0% 0%, rgba(201, 168, 59, 0.16), transparent 60%),
+    linear-gradient(160deg, #241F10 0%, #12100A 38%, var(--hs-ink) 100%) fixed;
+  -webkit-font-smoothing: antialiased;
+}
+
+.hs-site a { color: inherit; text-decoration: none; }
+.hs-site img { display: block; max-width: 100%; }
+.hs-site button { font: inherit; color: inherit; cursor: pointer; }
+.hs-site :focus-visible { outline: 2px solid var(--hs-gold-2); outline-offset: 3px; }
+
+.hs-wrap {
+  width: 100%;
+  max-width: var(--hs-wrap);
+  margin-inline: auto;
+  padding-inline: var(--hs-gutter);
+}
+
+.hs-section { padding-block: var(--hs-gap) 0; }
+.hs-section:last-of-type { padding-bottom: var(--hs-gap); }
+
+/* ---------- Type ---------- */
+.hs-display,
+.hs-h2,
+.hs-h3 {
+  font-weight: 800;
+  font-style: italic;
+  text-transform: uppercase;
+  letter-spacing: -0.01em;
+  line-height: 0.98;
+}
+
+.hs-display { font-size: clamp(2.6rem, 7vw, 5.6rem); }
+.hs-h2 { font-size: clamp(1.9rem, 4.2vw, 3.2rem); }
+.hs-h3 { font-size: clamp(1.15rem, 2vw, 1.5rem); line-height: 1.1; }
+
+/* Small section label with the gold tick, like the reference's red tick */
+.hs-kicker {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 1.05rem;
+  font-weight: 700;
+  font-style: italic;
+  text-transform: uppercase;
+  letter-spacing: 0.01em;
+  color: var(--hs-text);
+}
+
+.hs-kicker::before {
+  content: '';
+  width: 6px;
+  height: 18px;
+  background: var(--hs-gold);
+  transform: skewX(-18deg);
+}
+
+.hs-lede { color: var(--hs-muted); font-size: 1rem; max-width: 46ch; }
+.hs-muted { color: var(--hs-muted); }
+
+/* ---------- Buttons ---------- */
+.hs-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  min-height: 48px;
+  padding: 0 26px;
+  border: none;
+  font-size: 0.82rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  clip-path: polygon(8% 0, 100% 0, 92% 100%, 0 100%);
+  transition: background-color 0.2s var(--hs-ease), color 0.2s var(--hs-ease);
+}
+
+.hs-btn--gold { background: var(--hs-gold); color: var(--hs-on-gold); }
+.hs-btn--gold:hover { background: var(--hs-gold-2); }
+.hs-btn--cream { background: var(--hs-cream); color: var(--hs-on-gold); }
+.hs-btn--cream:hover { background: #fff; }
+.hs-btn--ghost { background: rgba(239, 227, 179, 0.08); color: var(--hs-text); }
+.hs-btn--ghost:hover { background: rgba(239, 227, 179, 0.16); }
+
+.hs-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 12px;
+  border-radius: 999px;
+  border: 1px solid var(--hs-line);
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.hs-pill--gold { border-color: transparent; background: var(--hs-gold); color: var(--hs-on-gold); }
+
+.hs-arrow-btn {
+  width: 52px;
+  height: 46px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  background: rgba(239, 227, 179, 0.1);
+  clip-path: polygon(14% 0, 100% 0, 86% 100%, 0 100%);
+  transition: background-color 0.2s var(--hs-ease);
+}
+
+.hs-arrow-btn:hover:not(:disabled) { background: var(--hs-gold); color: var(--hs-on-gold); }
+.hs-arrow-btn:disabled { opacity: 0.35; cursor: default; }
+
+/* ---------- Slanted band (the signature panel) ---------- */
+.hs-band {
+  position: relative;
+  padding: clamp(28px, 4vw, 48px);
+  background: linear-gradient(120deg, rgba(201, 168, 59, 0.22), rgba(201, 168, 59, 0.04) 60%);
+  clip-path: polygon(0 0, 100% 0, 96% 100%, 0 100%);
+}
+
+/* Photo frame used everywhere a picture appears */
+.hs-photo {
+  position: relative;
+  overflow: hidden;
+  background: var(--hs-panel-solid);
+}
+
+.hs-photo > img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* Shown when a venue has no photo yet: brand mark on gold-tinted black */
+.hs-photo--empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background:
+    repeating-linear-gradient(-60deg, rgba(201, 168, 59, 0.06) 0 14px, transparent 14px 28px),
+    var(--hs-panel-solid);
+}
+
+.hs-photo--empty > .hs-photo__mark {
+  position: static;
+  width: min(46%, 220px);
+  height: auto;
+  opacity: 0.85;
+}
+
+/* ---------- States ---------- */
+.hs-state {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 28px;
+  background: var(--hs-panel);
+  border-left: 4px solid var(--hs-gold);
+  color: var(--hs-muted);
+}
+
+.hs-state strong { color: var(--hs-text); font-weight: 700; }
+
+.hs-skel {
+  background: linear-gradient(90deg, rgba(239,227,179,0.05), rgba(239,227,179,0.12), rgba(239,227,179,0.05));
+  background-size: 200% 100%;
+  animation: hs-skel 1.3s linear infinite;
+}
+
+@keyframes hs-skel { from { background-position: 200% 0; } to { background-position: -200% 0; } }
+
+.hs-sr {
+  position: absolute !important;
+  width: 1px; height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hs-site *, .hs-site *::before, .hs-site *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

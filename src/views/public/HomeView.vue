@@ -1,571 +1,549 @@
 <template>
-  <div style="background:#0A0A0A;min-height:100vh;">
-
-    <!-- Hero -->
-    <div style="position:relative;height:70vh;min-height:520px;max-height:720px;display:flex;align-items:center;justify-content:center;overflow:hidden;">
-
-      <!-- Background image -->
-      <div style="position:absolute;inset:0;background-image:url('https://images.unsplash.com/photo-1574096079513-d8259312b785?w=1800&q=80');background-size:cover;background-position:center;background-repeat:no-repeat;"></div>
-
-      <!-- Overlays -->
-      <div style="position:absolute;inset:0;background:linear-gradient(135deg,rgba(10,10,10,0.9) 0%,rgba(20,14,0,0.78) 50%,rgba(10,10,10,0.88) 100%);"></div>
-      <div style="position:absolute;inset:0;background:radial-gradient(ellipse at 60% 40%,rgba(245,197,24,0.07) 0%,transparent 65%);"></div>
-
-      <!-- Corner bracket decorations -->
-      <div style="position:absolute;top:32px;left:32px;width:40px;height:40px;border-top:1.5px solid rgba(245,197,24,0.4);border-left:1.5px solid rgba(245,197,24,0.4);border-radius:2px 0 0 0;pointer-events:none;"></div>
-      <div style="position:absolute;top:32px;right:32px;width:40px;height:40px;border-top:1.5px solid rgba(245,197,24,0.4);border-right:1.5px solid rgba(245,197,24,0.4);border-radius:0 2px 0 0;pointer-events:none;"></div>
-      <div style="position:absolute;bottom:32px;left:32px;width:40px;height:40px;border-bottom:1.5px solid rgba(245,197,24,0.4);border-left:1.5px solid rgba(245,197,24,0.4);border-radius:0 0 0 2px;pointer-events:none;"></div>
-      <div style="position:absolute;bottom:32px;right:32px;width:40px;height:40px;border-bottom:1.5px solid rgba(245,197,24,0.4);border-right:1.5px solid rgba(245,197,24,0.4);border-radius:0 0 2px 0;pointer-events:none;"></div>
-
-      <!-- Animated gold lines -->
-      <div style="position:absolute;inset:0;overflow:hidden;pointer-events:none;">
-        <div v-for="i in 3" :key="i" :style="goldLineStyle(i)"></div>
+  <div class="home">
+    <!-- ============ HERO ============ -->
+    <section class="hero" aria-labelledby="hero-title">
+      <div class="hero__media">
+        <img v-if="heroImage" :src="heroImage" alt="" class="hero__img" fetchpriority="high" @error="heroFailed = true" />
       </div>
 
-      <!-- Hero Content -->
-      <div style="position:relative;z-index:1;text-align:center;padding:0 24px;max-width:700px;">
-        <!-- Eyebrow pill -->
-        <div style="display:inline-flex;align-items:center;gap:8px;background:rgba(245,197,24,0.08);border:1px solid rgba(245,197,24,0.2);border-radius:100px;padding:5px 18px;margin-bottom:20px;">
-          <div style="width:5px;height:5px;border-radius:50%;background:#F5C518;animation:heroPulse 2s infinite;"></div>
-          <span style="font-size:10px;color:#F5C518;letter-spacing:3px;text-transform:uppercase;font-weight:600;">Sports Bar · Pub · Restaurant</span>
+      <div class="hero__title-panel">
+        <h1 id="hero-title" class="hs-display hero__title">{{ site.siteName }}</h1>
+        <p v-if="site.tagline" class="hero__chip">{{ site.tagline }}</p>
+      </div>
+
+      <!-- Tonight: built live from the weekly line-ups -->
+      <aside class="hero__tonight" aria-labelledby="tonight-title">
+        <h2 id="tonight-title" class="hero__tonight-title">Tonight<span>{{ DAY_NAMES[nightDay] }}</span></h2>
+        <div v-if="site.loading.weekly && !site.loaded.weekly" class="hero__tonight-list">
+          <div v-for="n in 3" :key="n" class="hs-skel" style="height: 46px" />
         </div>
+        <ul v-else-if="tonight.length" class="hero__tonight-list">
+          <li v-for="e in tonight.slice(0, 5)" :key="e.id">
+            <router-link :to="venueLink(e)" class="hero__tonight-item">
+              <span class="hero__tonight-name">{{ e.title }}</span>
+              <span class="hero__tonight-meta">{{ e.branch_name }}<template v-if="timeRange(e)"> | {{ timeRange(e) }}</template></span>
+            </router-link>
+          </li>
+        </ul>
+        <p v-else class="hs-muted hero__tonight-empty">No line-up listed for tonight. All venues are open as usual.</p>
+        <router-link to="/whats-on" class="hero__tonight-more">
+          {{ tonight.length > 5 ? `+${tonight.length - 5} more tonight` : 'Full weekly line-up' }} ›
+        </router-link>
+      </aside>
+    </section>
 
-        <h1 style="font-size:clamp(38px,6vw,64px);font-weight:900;line-height:1.05;margin:0 0 16px;color:#fff;letter-spacing:-1px;">
-          The <span style="color:#F5C518;">Honeysuckle</span> Pub
-        </h1>
-
-        <p style="font-size:clamp(14px,1.6vw,16px);color:#666;margin:0 auto 32px;line-height:1.8;max-width:440px;">
-          Catch every game and moment. Your premium sports viewing destination across Accra.
-        </p>
-
-        <!-- CTA buttons -->
-        <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap;">
-          <v-btn
-            color="primary"
-            size="large"
-            style="color:#0A0A0A;font-weight:700;padding:0 28px;border-radius:10px;"
-            to="/live-sports"
-          >
-            <v-icon start size="16">mdi-broadcast</v-icon>
-            Live Sports
-          </v-btn>
-          <v-btn
-            variant="outlined"
-            color="primary"
-            size="large"
-            style="padding:0 28px;border-radius:10px;"
-            to="/branches"
-          >
-            Our Locations
-          </v-btn>
-          <v-btn
-            variant="text"
-            size="large"
-            style="padding:0 28px;border-radius:10px;border:1px solid #2A2A2A;color:#888;"
-            to="/reservations"
-          >
-            Reserve a Table
-          </v-btn>
-        </div>
-      </div>
-    </div>
-
-    <!-- Gold accent line -->
-    <div style="height:2px;background:linear-gradient(90deg,transparent,rgba(245,197,24,0.5) 30%,rgba(245,197,24,0.8) 50%,rgba(245,197,24,0.5) 70%,transparent);"></div>
-
-    <!-- Stats bar -->
-    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(80px,1fr));background:#111111;border-bottom:1px solid #1E1E1E;">
-      <div
-        v-for="(stat, i) in statBar"
-        :key="stat.label"
-        style="padding:20px 24px;text-align:center;"
-        :style="{ borderRight: i < statBar.length - 1 ? '1px solid #1E1E1E' : 'none' }"
-      >
-        <div style="font-size:22px;font-weight:900;color:#F5C518;">{{ stat.value }}</div>
-        <div style="font-size:10px;color:#555;letter-spacing:2px;text-transform:uppercase;margin-top:4px;">{{ stat.label }}</div>
-      </div>
-    </div>
-
-    <!-- Upcoming Events -->
-    <div style="padding:80px 24px;max-width:1200px;margin:0 auto;">
-      <div style="display:flex;align-items:flex-end;justify-content:space-between;margin-bottom:40px;flex-wrap:wrap;gap:16px;">
-        <div>
-          <div style="font-size:10px;color:#F5C518;letter-spacing:3px;text-transform:uppercase;margin-bottom:8px;">Showing from now to next year</div>
-          <h2 style="font-size:clamp(24px,4vw,38px);font-weight:800;margin:0;">Catch every Game and Moment</h2>
-        </div>
-        <v-btn variant="text" color="primary" to="/live-sports" style="font-size:13px;">
-          View all <v-icon end size="16">mdi-arrow-right</v-icon>
-        </v-btn>
-      </div>
-
-      <div v-if="loadingEvents" style="display:flex;justify-content:center;padding:60px 0;">
-        <v-progress-circular indeterminate color="primary" size="48" />
-      </div>
-
-      <div v-else style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:16px;">
-        <div
-          v-for="event in upcomingEvents"
-          :key="event.id"
-          class="event-card"
-          style="background:#111111;border:1px solid #2A2A2A;border-radius:12px;overflow:hidden;cursor:pointer;transition:border-color 0.2s,transform 0.2s;"
-          @mouseenter="e => { e.currentTarget.style.borderColor='#F5C518'; e.currentTarget.style.transform='translateY(-2px)'; }"
-          @mouseleave="e => { e.currentTarget.style.borderColor='#2A2A2A'; e.currentTarget.style.transform='translateY(0)'; }"
-        >
-          <div style="padding:20px;">
-            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
-              <span style="font-size:10px;color:#F5C518;letter-spacing:2px;text-transform:uppercase;font-weight:600;">
-                {{ event.league_or_category || event.event_type }}
-              </span>
-              <v-chip v-if="event.status === 'live'" color="error" size="x-small" style="font-weight:700;animation:heroPulse 1.5s infinite;">LIVE</v-chip>
-            </div>
-            <div style="font-size:15px;font-weight:700;margin-bottom:14px;line-height:1.4;">{{ event.title }}</div>
-            <div style="display:flex;align-items:center;gap:14px;font-size:12px;color:#888;margin-bottom:4px;">
-              <span style="display:flex;align-items:center;gap:4px;">
-                <v-icon size="12" color="primary">mdi-calendar</v-icon>
-                {{ formatDate(event.date_start) }}
-              </span>
-              <span v-if="event.time_local" style="display:flex;align-items:center;gap:4px;">
-                <v-icon size="12" color="primary">mdi-clock-outline</v-icon>
-                {{ event.time_local }}
-              </span>
-            </div>
-            <div v-if="event.branch_name" style="font-size:12px;color:#888;display:flex;align-items:center;gap:4px;margin-bottom:16px;">
-              <v-icon size="12" color="primary">mdi-map-marker</v-icon>
-              {{ event.branch_name }}
-            </div>
-            <v-btn color="primary" size="small" block style="color:#0A0A0A;font-weight:700;border-radius:8px;" @click="openBooking(event)">
-              <v-icon start size="13">mdi-calendar-check</v-icon>
-              Book Spot
-            </v-btn>
+    <!-- ============ ON THIS WEEK ============ -->
+    <section class="hs-section week" aria-labelledby="week-title">
+      <div class="hs-wrap week__inner">
+        <div class="week__copy">
+          <h2 id="week-title" class="hs-kicker">On this week</h2>
+          <p class="hs-lede">DJs, live bands and karaoke across every Honeysuckle. Pick your night and your branch.</p>
+          <div class="week__arrows">
+            <button type="button" class="hs-arrow-btn" :disabled="!canPrev" aria-label="Previous" @click="scrollWeek(-1)">‹</button>
+            <button type="button" class="hs-arrow-btn" :disabled="!canNext" aria-label="Next" @click="scrollWeek(1)">›</button>
           </div>
         </div>
-      </div>
-    </div>
 
-    <!-- This Week -->
-    <div style="background:#111111;border-top:1px solid #1E1E1E;border-bottom:1px solid #1E1E1E;padding:72px 24px;">
-      <div style="max-width:1200px;margin:0 auto;">
-        <div style="font-size:10px;color:#F5C518;letter-spacing:3px;text-transform:uppercase;margin-bottom:8px;">Showing this week</div>
-        <h2 style="font-size:clamp(22px,3vw,32px);font-weight:800;margin:0 0 36px;">This Week's Highlights</h2>
-
-        <div v-if="weekEvents.length === 0" style="text-align:center;padding:40px;color:#555;">
-          No events scheduled this week.
+        <div v-if="site.loading.weekly && !site.loaded.weekly" class="week__track">
+          <div v-for="n in 3" :key="n" class="hs-skel week__card" />
         </div>
-
-        <div v-else style="display:flex;gap:14px;overflow-x:auto;padding-bottom:12px;">
-          <div
-            v-for="event in weekEvents"
-            :key="event.id"
-            style="min-width:220px;background:#1A1A1A;border:1px solid #2A2A2A;border-radius:12px;padding:20px;flex-shrink:0;transition:border-color 0.2s;"
-            @mouseenter="e => e.currentTarget.style.borderColor='#F5C518'"
-            @mouseleave="e => e.currentTarget.style.borderColor='#2A2A2A'"
+        <div v-else-if="site.errors.weekly" class="hs-state">
+          <strong>The line-up could not be loaded.</strong>
+          <button type="button" class="hs-btn hs-btn--ghost" @click="site.retry('weekly')">Try again</button>
+        </div>
+        <div v-else-if="weekCards.length" ref="track" class="week__track" @scroll="updateArrows">
+          <router-link
+            v-for="(c, i) in weekCards"
+            :key="`${c.event.id}-${c.offset}`"
+            :to="venueLink(c.event)"
+            class="week__card"
+            :class="{ 'week__card--now': i === 0 }"
           >
-            <div style="font-size:10px;color:#F5C518;letter-spacing:2px;text-transform:uppercase;margin-bottom:8px;">{{ event.league_or_category }}</div>
-            <div style="font-size:14px;font-weight:700;margin-bottom:12px;line-height:1.4;">{{ event.title }}</div>
-            <div style="font-size:11px;color:#666;">{{ formatDate(event.date_start) }} · {{ event.time_local }}</div>
-          </div>
+            <span class="week__badge">{{ c.event.badge || c.event.branch_name }}</span>
+            <span class="week__title">{{ c.event.title }}</span>
+            <span class="week__venue">{{ c.event.branch_name }}<template v-if="c.event.area"> | {{ c.event.area }}</template></span>
+            <span class="week__when">
+              <span>{{ c.offset === 0 ? 'Tonight' : `${DAY_SHORT[c.day]} ${c.date.getDate()} ${MONTHS[c.date.getMonth()]}` }}</span>
+              <span>{{ c.event.time_local ? clock(c.event.time_local) : '' }}</span>
+            </span>
+          </router-link>
+        </div>
+        <div v-else class="hs-state">
+          <strong>The weekly line-up is being updated.</strong>
+          <span>Follow us on Instagram for this week's nights.</span>
         </div>
       </div>
-    </div>
+    </section>
 
-    <!-- ═══════════════════════════════════════════════════════ -->
-    <!-- LOYALTY REWARDS SECTION                                 -->
-    <!-- ═══════════════════════════════════════════════════════ -->
-    <div style="position:relative;padding:100px 24px;overflow:hidden;background:#0A0A0A;">
-
-      <!-- Radial gold glow behind content -->
-      <div style="position:absolute;inset:0;background:radial-gradient(ellipse at 50% 50%,rgba(245,197,24,0.05) 0%,transparent 70%);pointer-events:none;"></div>
-
-      <!-- Faint large text watermark -->
-      <div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);font-size:clamp(80px,15vw,180px);font-weight:900;color:rgba(245,197,24,0.025);white-space:nowrap;letter-spacing:-4px;pointer-events:none;user-select:none;">REWARDS</div>
-
-      <div style="max-width:1200px;margin:0 auto;position:relative;z-index:1;">
-
-        <!-- Section header -->
-        <div style="text-align:center;margin-bottom:72px;">
-          <div style="display:inline-flex;align-items:center;gap:8px;background:rgba(245,197,24,0.08);border:1px solid rgba(245,197,24,0.2);border-radius:100px;padding:5px 18px;margin-bottom:24px;">
-            <div style="width:5px;height:5px;border-radius:50%;background:#F5C518;animation:heroPulse 2s infinite;"></div>
-            <span style="font-size:10px;color:#F5C518;letter-spacing:3px;text-transform:uppercase;font-weight:600;">Honeysuckle Rewards</span>
-          </div>
-          <h2 style="font-size:clamp(32px,5vw,58px);font-weight:900;margin:0 0 16px;line-height:1.05;letter-spacing:-1px;">
-            Every visit<br><span style="color:#F5C518;">earns you more.</span>
+    <!-- ============ OUR VENUES (gold block) ============ -->
+    <section class="hs-section" aria-labelledby="venues-title">
+      <div class="venues">
+        <div class="venues__copy">
+          <h2 id="venues-title" class="venues__title">
+            <span class="venues__outline">Our</span>
+            <span>Venues</span>
           </h2>
-          <p style="font-size:clamp(14px,1.6vw,17px);color:#555;max-width:480px;margin:0 auto;line-height:1.8;">
-            Join Honeysuckle Rewards — free forever — and start turning every beer, wing, and game night into points that pay you back.
-          </p>
+          <p>{{ site.venues.length ? `${site.venues.length} places across Accra.` : 'Across Accra.' }} Same Honeysuckle welcome at every one.</p>
+          <router-link to="/branches" class="hs-btn hs-btn--cream venues__cta">Find a branch</router-link>
         </div>
-
-        <!-- Main two-column layout -->
-        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:16px;align-items:start;margin-bottom:16px;">
-
-          <!-- Left: How it works -->
-          <div style="background:#111111;border:1px solid #1E1E1E;border-radius:20px;padding:40px;">
-            <div style="font-size:10px;color:#F5C518;letter-spacing:3px;text-transform:uppercase;margin-bottom:20px;font-weight:600;">How it works</div>
-            <h3 style="font-size:26px;font-weight:900;margin:0 0 32px;line-height:1.2;">Earn. Redeem.<br>Repeat.</h3>
-
-            <div style="display:flex;flex-direction:column;gap:28px;">
-              <!-- Step 1 -->
-              <div style="display:flex;gap:20px;align-items:flex-start;">
-                <div style="flex-shrink:0;width:40px;height:40px;border-radius:10px;background:rgba(245,197,24,0.1);border:1px solid rgba(245,197,24,0.2);display:flex;align-items:center;justify-content:center;">
-                  <v-icon size="18" color="primary">mdi-walk</v-icon>
-                </div>
-                <div>
-                  <div style="font-size:14px;font-weight:700;margin-bottom:4px;">Visit &amp; Spend</div>
-                  <div style="font-size:13px;color:#555;line-height:1.6;">Earn 1 point for every GHC 5 spent across all Honeysuckle branches.</div>
-                </div>
-              </div>
-              <!-- Connector line -->
-              <div style="margin-left:20px;width:1px;height:16px;background:linear-gradient(to bottom,rgba(245,197,24,0.3),transparent);"></div>
-              <!-- Step 2 -->
-              <div style="display:flex;gap:20px;align-items:flex-start;">
-                <div style="flex-shrink:0;width:40px;height:40px;border-radius:10px;background:rgba(245,197,24,0.1);border:1px solid rgba(245,197,24,0.2);display:flex;align-items:center;justify-content:center;">
-                  <v-icon size="18" color="primary">mdi-chart-line</v-icon>
-                </div>
-                <div>
-                  <div style="font-size:14px;font-weight:700;margin-bottom:4px;">Accumulate Points</div>
-                  <div style="font-size:13px;color:#555;line-height:1.6;">Track your points in real-time on your digital membership card.</div>
-                </div>
-              </div>
-              <!-- Connector line -->
-              <div style="margin-left:20px;width:1px;height:16px;background:linear-gradient(to bottom,rgba(245,197,24,0.3),transparent);"></div>
-              <!-- Step 3 -->
-              <div style="display:flex;gap:20px;align-items:flex-start;">
-                <div style="flex-shrink:0;width:40px;height:40px;border-radius:10px;background:rgba(245,197,24,0.1);border:1px solid rgba(245,197,24,0.2);display:flex;align-items:center;justify-content:center;">
-                  <v-icon size="18" color="primary">mdi-gift-outline</v-icon>
-                </div>
-                <div>
-                  <div style="font-size:14px;font-weight:700;margin-bottom:4px;">Redeem Rewards</div>
-                  <div style="font-size:13px;color:#555;line-height:1.6;">Trade your points for free drinks, sides, wings, and exclusive experiences.</div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <!-- Right: What points unlock -->
-          <div style="background:#111111;border:1px solid #1E1E1E;border-radius:20px;padding:40px;">
-            <div style="font-size:10px;color:#F5C518;letter-spacing:3px;text-transform:uppercase;margin-bottom:20px;font-weight:600;">Rewards</div>
-            <h3 style="font-size:26px;font-weight:900;margin:0 0 28px;">What your points unlock</h3>
-
-            <div style="display:flex;flex-direction:column;gap:2px;">
-              <div
-                v-for="(reward, i) in rewards"
-                :key="reward.pts"
-                style="display:flex;align-items:center;justify-content:space-between;padding:14px 16px;border-radius:10px;transition:background 0.2s;"
-                :style="{ background: i % 2 === 0 ? '#161616' : 'transparent' }"
-              >
-                <div style="display:flex;align-items:center;gap:14px;">
-                  <div style="font-size:13px;font-weight:800;color:#F5C518;min-width:52px;">{{ reward.pts }} pts</div>
-                  <div style="font-size:13px;color:#888;">{{ reward.label }}</div>
-                </div>
-                <div v-if="reward.tag" style="font-size:9px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;padding:3px 10px;border-radius:100px;"
-                  :style="{ background: reward.tag === 'Popular' ? 'rgba(245,197,24,0.12)' : 'rgba(100,200,120,0.1)', color: reward.tag === 'Popular' ? '#F5C518' : '#6DC87A', border: reward.tag === 'Popular' ? '1px solid rgba(245,197,24,0.25)' : '1px solid rgba(100,200,120,0.2)' }">
-                  {{ reward.tag }}
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- Bottom: Premium card (full width) -->
-        <div style="position:relative;background:#111111;border:1px solid #2A2A2A;border-radius:20px;overflow:hidden;">
-
-          <!-- Gold shimmer top border -->
-          <div style="height:2px;background:linear-gradient(90deg,transparent,rgba(245,197,24,0.6) 30%,#F5C518 50%,rgba(245,197,24,0.6) 70%,transparent);"></div>
-
-          <!-- Subtle gold radial inside card -->
-          <div style="position:absolute;inset:0;background:radial-gradient(ellipse at 80% 50%,rgba(245,197,24,0.04) 0%,transparent 60%);pointer-events:none;"></div>
-
-          <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:32px;align-items:start;padding:36px 28px;">
-
-            <!-- Left text side -->
-            <div style="padding-right:0;">
-              <div style="display:inline-flex;align-items:center;gap:6px;background:rgba(245,197,24,0.08);border:1px solid rgba(245,197,24,0.2);border-radius:6px;padding:4px 12px;margin-bottom:20px;">
-                <v-icon size="13" color="primary">mdi-star-four-points</v-icon>
-                <span style="font-size:10px;color:#F5C518;letter-spacing:2px;text-transform:uppercase;font-weight:700;">Premium</span>
-              </div>
-              <h3 style="font-size:clamp(28px,4vw,44px);font-weight:900;margin:0 0 16px;line-height:1.05;letter-spacing:-0.5px;">
-                Honeysuckle<span style="color:#F5C518;">+</span>
-              </h3>
-              <p style="font-size:14px;color:#555;line-height:1.8;margin:0 0 28px;max-width:380px;">
-                The premium tier for those who live at Honeysuckle. Get discounts on wings every visit, earn points faster, and unlock founding member status — limited to 200 members only.
-              </p>
-              <div style="display:flex;align-items:center;gap:6px;font-size:13px;color:#444;margin-bottom:28px;">
-                <v-icon size="14" color="#444">mdi-account-group-outline</v-icon>
-                Founding Member spots are filling fast
-              </div>
-              <a href="https://loyalty.honeysucklepub.com" target="_blank" rel="noopener" style="text-decoration:none;">
-                <div
-                  class="loyalty-cta-btn"
-                  style="display:inline-flex;align-items:center;gap:10px;background:#F5C518;color:#0A0A0A;font-weight:800;font-size:14px;padding:14px 28px;border-radius:12px;cursor:pointer;transition:all 0.2s;letter-spacing:0.2px;"
-                  @mouseenter="e => { e.currentTarget.style.background='#FFD700'; e.currentTarget.style.transform='translateY(-1px)'; e.currentTarget.style.boxShadow='0 8px 32px rgba(245,197,24,0.25)'; }"
-                  @mouseleave="e => { e.currentTarget.style.background='#F5C518'; e.currentTarget.style.transform='translateY(0)'; e.currentTarget.style.boxShadow='none'; }"
-                >
-                  <v-icon size="16">mdi-crown-outline</v-icon>
-                  Claim your Founding Spot
-                  <v-icon size="14">mdi-arrow-right</v-icon>
-                </div>
-              </a>
-            </div>
-
-            <!-- Right: perks list -->
-            <div style="padding-left:0;">
-              <div style="font-size:11px;color:#555;letter-spacing:2px;text-transform:uppercase;margin-bottom:20px;">What you get</div>
-              <div style="display:flex;flex-direction:column;gap:16px;">
-                <div v-for="perk in perks" :key="perk" style="display:flex;align-items:center;gap:12px;">
-                  <div style="flex-shrink:0;width:20px;height:20px;border-radius:50%;background:rgba(245,197,24,0.1);border:1px solid rgba(245,197,24,0.3);display:flex;align-items:center;justify-content:center;">
-                    <v-icon size="11" color="primary">mdi-check</v-icon>
-                  </div>
-                  <span style="font-size:14px;color:#CCCCCC;">{{ perk }}</span>
-                </div>
-              </div>
-
-              <!-- Price callout -->
-              <div style="margin-top:32px;padding:20px 24px;background:#1A1A1A;border:1px solid #2A2A2A;border-radius:14px;">
-                <div style="font-size:10px;color:#555;letter-spacing:2px;text-transform:uppercase;margin-bottom:6px;">Founding Member Rate</div>
-                <div style="display:flex;align-items:baseline;gap:4px;">
-                  <span style="font-size:38px;font-weight:900;color:#F5C518;line-height:1;">GHC 80</span>
-                  <span style="font-size:13px;color:#555;">/month</span>
-                </div>
-                <div style="font-size:12px;color:#444;margin-top:6px;">Break even in just 3 visits</div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- Bottom CTA strip -->
-        <div style="margin-top:16px;background:#111111;border:1px solid #1E1E1E;border-radius:16px;padding:24px;display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:16px;">
-          <div>
-            <div style="font-size:18px;font-weight:800;margin-bottom:4px;">Free to join. Instant rewards.</div>
-            <div style="font-size:13px;color:#555;">No credit card needed — start earning points on your very next visit.</div>
-          </div>
-          <div style="display:flex;gap:12px;flex-wrap:wrap;">
-            <a href="https://loyalty.honeysucklepub.com" target="_blank" rel="noopener" style="text-decoration:none;">
-              <div
-                style="display:inline-flex;align-items:center;gap:8px;background:#F5C518;color:#0A0A0A;font-weight:800;font-size:13px;padding:12px 24px;border-radius:10px;cursor:pointer;transition:all 0.2s;"
-                @mouseenter="e => { e.currentTarget.style.background='#FFD700'; e.currentTarget.style.transform='translateY(-1px)'; }"
-                @mouseleave="e => { e.currentTarget.style.background='#F5C518'; e.currentTarget.style.transform='translateY(0)'; }"
-              >
-                <v-icon size="15">mdi-medal-outline</v-icon>
-                Join Rewards — Free
-              </div>
-            </a>
-            <a href="https://loyalty.honeysucklepub.com" target="_blank" rel="noopener" style="text-decoration:none;">
-              <div
-                style="display:inline-flex;align-items:center;gap:8px;background:transparent;color:#888;font-weight:600;font-size:13px;padding:12px 24px;border-radius:10px;cursor:pointer;border:1px solid #2A2A2A;transition:all 0.2s;"
-                @mouseenter="e => { e.currentTarget.style.borderColor='#F5C518'; e.currentTarget.style.color='#F5C518'; }"
-                @mouseleave="e => { e.currentTarget.style.borderColor='#2A2A2A'; e.currentTarget.style.color='#888'; }"
-              >
-                Sign In
-              </div>
-            </a>
-          </div>
-        </div>
-
-      </div>
-    </div>
-    <!-- ═══════════════════════════════════════════════════════ -->
-
-    <!-- Gold accent line -->
-    <div style="height:1px;background:linear-gradient(90deg,transparent,rgba(245,197,24,0.3) 30%,rgba(245,197,24,0.5) 50%,rgba(245,197,24,0.3) 70%,transparent);"></div>
-
-    <!-- Branches -->
-    <div style="padding:80px 24px;max-width:1200px;margin:0 auto;">
-      <div style="font-size:10px;color:#F5C518;letter-spacing:3px;text-transform:uppercase;margin-bottom:8px;">Perfect place to watch the game</div>
-      <h2 style="font-size:clamp(22px,3vw,32px);font-weight:800;margin:0 0 36px;">Our Locations</h2>
-
-      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:14px;">
-        <div
-          v-for="branch in branches"
-          :key="branch.id"
-          style="background:#111111;border:1px solid #2A2A2A;border-radius:12px;padding:24px;cursor:pointer;transition:border-color 0.2s,transform 0.2s;"
-          @mouseenter="e => { e.currentTarget.style.borderColor='#F5C518'; e.currentTarget.style.transform='translateY(-2px)'; }"
-          @mouseleave="e => { e.currentTarget.style.borderColor='#2A2A2A'; e.currentTarget.style.transform='translateY(0)'; }"
-          @click="$router.push(`/branches/${branch.slug}`)"
-        >
-          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
-            <div style="font-size:17px;font-weight:800;color:#F5C518;">{{ branch.name }}</div>
-            <div style="font-size:10px;color:#444;background:#1A1A1A;padding:2px 10px;border-radius:100px;border:1px solid #2A2A2A;">est.{{ branch.established_year }}</div>
-          </div>
-          <div style="display:flex;align-items:flex-start;gap:8px;margin-bottom:8px;font-size:13px;color:#777;">
-            <v-icon size="13" color="primary" style="margin-top:1px;">mdi-map-marker</v-icon>
-            {{ branch.address }}
-          </div>
-          <div style="display:flex;align-items:center;gap:8px;font-size:13px;color:#777;">
-            <v-icon size="13" color="primary">mdi-phone</v-icon>
-            {{ branch.phone_primary }}
-          </div>
+        <div class="venues__track">
+          <template v-if="site.venues.length">
+            <router-link
+              v-for="b in site.venues"
+              :key="b.id"
+              :to="venueLinkFor(b)"
+              class="venues__card"
+            >
+              <VenuePhoto :src="site.coverFor(b)" :alt="b.name" class="venues__photo" />
+              <span class="venues__name">{{ b.name }}</span>
+            </router-link>
+          </template>
+          <template v-else>
+            <div v-for="n in 3" :key="n" class="venues__card hs-skel" />
+          </template>
         </div>
       </div>
-    </div>
+    </section>
 
-    <!-- Book Event Dialog -->
-    <v-dialog v-model="bookDialog" max-width="500" persistent>
-      <v-card style="background:#111111;border:1px solid #2A2A2A;">
-        <div class="d-flex align-center justify-space-between pa-5 pb-4" style="border-bottom:1px solid #2A2A2A;">
-          <div style="font-size:17px;font-weight:700;">Book Event Spot</div>
-          <v-btn icon="mdi-close" variant="text" size="small" @click="bookDialog = false" />
+    <!-- ============ FIND YOUR LOCAL (list with tabs) ============ -->
+    <section class="hs-section" aria-labelledby="local-title">
+      <div class="hs-wrap local">
+        <div class="local__copy">
+          <h2 id="local-title" class="hs-kicker">Find your local</h2>
+          <p class="hs-lede">Sports bars, pubs and lounges, each with its own nights. Choose a venue to see its line-up, photos and contacts.</p>
         </div>
-        <div class="pa-5">
-          <div style="background:#1A1A1A;border-radius:10px;padding:16px;margin-bottom:20px;">
-            <div style="font-size:15px;font-weight:700;margin-bottom:4px;">{{ bookingEvent?.title }}</div>
-            <div style="font-size:13px;color:#888;">{{ formatDate(bookingEvent?.date_start) }} · {{ bookingEvent?.time_local }}</div>
+        <div class="local__list">
+          <div class="local__tabs" role="tablist" aria-label="Venue type">
+            <button
+              v-for="t in tabs"
+              :key="t.key"
+              type="button"
+              role="tab"
+              :aria-selected="tab === t.key"
+              class="local__tab"
+              :class="{ 'is-active': tab === t.key }"
+              @click="tab = t.key"
+            >{{ t.label }}</button>
           </div>
-          <div style="margin-bottom:16px;">
-            <div style="font-size:11px;color:#F5C518;font-weight:600;letter-spacing:1px;text-transform:uppercase;margin-bottom:10px;">Choose branch to watch at *</div>
-            <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:8px;">
-              <div
-                v-for="branch in branches"
-                :key="branch.id"
-                style="border-radius:10px;padding:12px;cursor:pointer;transition:all 0.2s;text-align:center;"
-                :style="{
-                  background: bookForm.branch_id === branch.id ? 'rgba(245,197,24,0.15)' : '#1A1A1A',
-                  border: bookForm.branch_id === branch.id ? '1px solid #F5C518' : '1px solid #2A2A2A'
-                }"
-                @click="bookForm.branch_id = branch.id"
-              >
-                <v-icon size="18" :color="bookForm.branch_id === branch.id ? 'primary' : '#555'" class="mb-1">mdi-store</v-icon>
-                <div style="font-size:11px;font-weight:600;" :style="{ color: bookForm.branch_id === branch.id ? '#F5C518' : '#888' }">
-                  {{ branch.name }}
-                </div>
-              </div>
-            </div>
-          </div>
-          <v-text-field v-model="bookForm.guests" label="Guests *" type="number" min="1" max="20" hide-details density="compact" bg-color="#1A1A1A" class="mb-3" />
-          <v-textarea v-model="bookForm.notes" label="Special Notes" hide-details density="compact" bg-color="#1A1A1A" rows="2" />
-          <v-alert v-if="bookError" type="error" variant="tonal" density="compact" class="mt-3">{{ bookError }}</v-alert>
+          <ul class="local__rows">
+            <li v-for="b in tabVenues" :key="b.id">
+              <router-link :to="venueLinkFor(b)" class="local__row">
+                <span class="local__name">{{ b.name }}</span>
+                <span class="local__addr">{{ b.address || 'Accra' }}</span>
+                <span class="local__go" aria-hidden="true">›</span>
+              </router-link>
+            </li>
+            <li v-if="site.loaded.branches && !tabVenues.length" class="hs-muted local__none">No venues in this list yet.</li>
+          </ul>
         </div>
-        <div class="d-flex justify-end ga-2 pa-5 pt-0">
-          <v-btn variant="text" @click="bookDialog = false">Cancel</v-btn>
-          <v-btn color="primary" :loading="bookSaving" style="color:#0A0A0A;font-weight:700;" @click="submitBooking">Confirm Booking</v-btn>
+      </div>
+    </section>
+
+    <!-- ============ WHAT'S ON ============ -->
+    <section class="hs-section" aria-labelledby="wo-title">
+      <div class="hs-wrap">
+        <h2 id="wo-title" class="hs-kicker wo__heading">What's on</h2>
+        <div class="wo">
+          <router-link v-for="c in whatsOn" :key="c.to" :to="c.to" class="wo__card">
+            <VenuePhoto :src="c.image" :alt="c.title" class="wo__photo" />
+            <p class="wo__text">{{ c.text }}</p>
+            <h3 class="hs-h3 wo__title">{{ c.title }}</h3>
+          </router-link>
         </div>
-      </v-card>
-    </v-dialog>
-
-    <!-- Snackbar -->
-    <v-snackbar v-model="snackbar.show" :color="snackbar.color" timeout="5000" location="top right">
-      {{ snackbar.text }}
-      <template #actions>
-        <v-btn variant="text" size="small" to="/member/bookings">View</v-btn>
-      </template>
-    </v-snackbar>
-
+      </div>
+    </section>
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
-import api from '@/services/api'
-import { useAuthStore } from '@/stores/auth.store'
-import { useRouter } from 'vue-router'
+import { ref, computed, onMounted, nextTick, watch } from 'vue'
+import VenuePhoto from '@/components/site/VenuePhoto.vue'
+import { useSiteStore, DAY_NAMES, DAY_SHORT, clock, timeRange } from '@/stores/site.store'
+import { useTonight } from '@/composables/useTonight'
 
-const upcomingEvents = ref([])
-const weekEvents     = ref([])
-const branches       = ref([])
-const loadingEvents  = ref(true)
+const site = useSiteStore()
+const { nightDay, nextSeven } = useTonight()
+const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
 
-const auth   = useAuthStore()
-const router = useRouter()
+// Hero: a featured photo from Admin → Media; until there is one, the image the
+// current live site already uses.
+const HERO_FALLBACK = 'https://images.unsplash.com/photo-1574096079513-d8259312b785?w=1800&q=80'
+const heroFailed = ref(false)
+const heroImage = computed(() => {
+  if (heroFailed.value) return '' // plain branded backdrop
+  return site.featuredPhotos[0]?.file_url || HERO_FALLBACK
+})
 
-const bookDialog   = ref(false)
-const bookingEvent = ref(null)
-const bookSaving   = ref(false)
-const bookError    = ref(null)
-const bookForm     = ref({ branch_id: null, guests: 1, notes: '' })
-const snackbar     = ref({ show: false, text: '', color: 'success' })
+const tonight = computed(() => site.onDay(nightDay.value))
 
-const statBar = [
-  { value: '3+',    label: 'Locations' },
-  { value: 'Daily', label: 'Live Events' },
-  { value: '20+',   label: 'Screens' },
-  { value: '7PM',   label: 'Opens Daily' },
-]
+// Next seven nights, one card per line-up entry
+const weekCards = computed(() =>
+  nextSeven.value.flatMap(n => site.onDay(n.day).map(event => ({ ...n, event }))).slice(0, 24),
+)
 
-const rewards = [
-  { pts: 50,  label: 'Free soft drink, dip, or small add-on', tag: 'Popular' },
-  { pts: 100, label: 'Free side dish or local beer',          tag: null     },
-  { pts: 120, label: 'Free draught beer of your choice',      tag: null     },
-  { pts: 150, label: '10% discount voucher on total bill',    tag: null     },
-  { pts: 200, label: 'Free classic wings portion',            tag: 'Best Value' },
-]
+const venueLinkFor = (b) => (b.slug === 'bar-x' ? '/bar-x' : `/branches/${b.slug}`)
+const venueLink = (e) => (e.branch_slug === 'bar-x' ? '/bar-x' : e.branch_slug ? `/branches/${e.branch_slug}` : '/whats-on')
 
-const perks = [
-  'GHC 27 off wings every visit',
-  '1.5× points multiplier',
-  'Access to exclusive rewards',
-  'Priority event access',
-  'Status recognition — all branches',
-  'Break even in just 3 visits',
-]
-
-function openBooking(event) {
-  if (!auth.isAuthenticated) { router.push('/register'); return }
-  bookingEvent.value = event
-  bookForm.value     = { branch_id: event.branch_id || null, guests: 1, notes: '' }
-  bookError.value    = null
-  bookDialog.value   = true
+// Carousel arrows
+const track = ref(null)
+const canPrev = ref(false)
+const canNext = ref(false)
+function updateArrows() {
+  const el = track.value
+  if (!el) return
+  canPrev.value = el.scrollLeft > 4
+  canNext.value = el.scrollLeft + el.clientWidth < el.scrollWidth - 4
 }
-
-async function submitBooking() {
-  if (!bookForm.value.branch_id) { bookError.value = 'Please select a branch'; return }
-  bookSaving.value = true
-  bookError.value  = null
-  try {
-    const res = await api.post('/event_bookings', {
-      event_id:  bookingEvent.value.id,
-      branch_id: bookForm.value.branch_id,
-      guests:    bookForm.value.guests,
-      notes:     bookForm.value.notes
-    })
-    bookDialog.value = false
-    snackbar.value   = { show: true, text: `Booked! Code: ${res.data.booking.confirmation_code}`, color: 'success' }
-  } catch (err) {
-    bookError.value = err.response?.data?.error || 'Booking failed'
-  } finally {
-    bookSaving.value = false
-  }
+function scrollWeek(dir) {
+  const el = track.value
+  if (el) el.scrollBy({ left: dir * el.clientWidth * 0.8, behavior: 'smooth' })
 }
+watch(weekCards, async () => { await nextTick(); updateArrows() })
 
-function goldLineStyle(i) {
-  const styles = [
-    { width:'1px', height:'200px', background:'linear-gradient(to bottom,transparent,rgba(245,197,24,0.25),transparent)', position:'absolute', top:'20%', left:'15%', transform:'rotate(45deg)', animation:'float1 6s ease-in-out infinite' },
-    { width:'1px', height:'300px', background:'linear-gradient(to bottom,transparent,rgba(245,197,24,0.15),transparent)', position:'absolute', top:'40%', right:'20%', transform:'rotate(-30deg)', animation:'float2 8s ease-in-out infinite' },
-    { width:'1px', height:'150px', background:'linear-gradient(to bottom,transparent,rgba(245,197,24,0.12),transparent)', position:'absolute', bottom:'30%', left:'40%', transform:'rotate(60deg)', animation:'float1 7s ease-in-out infinite 1s' },
-  ]
-  return styles[i - 1]
-}
+// Venue list tabs
+const tab = ref('pub')
+const tabs = computed(() => [
+  { key: 'pub', label: 'Pubs' },
+  ...(site.bars.length ? [{ key: 'bar', label: 'Bars & lounges' }] : []),
+])
+const tabVenues = computed(() => (tab.value === 'pub' ? site.pubs : site.bars))
 
-function formatDate(d) {
-  if (!d) return '—'
-  return new Date(d).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })
-}
+const barX = computed(() => site.branchBySlug('bar-x'))
+const whatsOn = computed(() => [
+  {
+    to: '/whats-on',
+    title: 'Weekly line-ups',
+    text: 'Every DJ, band and karaoke night at every branch, day by day.',
+    image: site.featuredPhotos[1]?.file_url || '',
+  },
+  {
+    to: '/menu',
+    title: 'Food & drinks',
+    text: 'Our current food and drinks menus, ready to view or download.',
+    image: site.featuredPhotos[2]?.file_url || '',
+  },
+  {
+    to: '/bar-x',
+    title: 'Bar-X',
+    text: barX.value?.tagline || 'Line-ups, photos and contacts for Bar-X.',
+    image: site.coverFor(barX.value),
+  },
+])
 
-onMounted(async () => {
-  try {
-    const [upcomingRes, weekRes, branchRes] = await Promise.all([
-      api.get('/events/upcoming'),
-      api.get('/events/this_week'),
-      api.get('/branches')
-    ])
-    upcomingEvents.value = upcomingRes.data.events
-    weekEvents.value     = weekRes.data.events
-    branches.value       = branchRes.data.branches
-  } finally {
-    loadingEvents.value = false
-  }
+onMounted(() => {
+  site.loadWeekly()
+  site.loadMedia()
 })
 </script>
 
-<style>
-@keyframes heroPulse {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.4; }
+<style scoped>
+/* ---------- Hero ---------- */
+.hero {
+  position: relative;
+  max-width: calc(var(--hs-wrap) + 80px);
+  margin: -28px auto 0;
+  padding: 0 clamp(0px, 2vw, 20px);
+  min-height: clamp(520px, 78vh, 760px);
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(280px, 380px);
+  align-items: end;
 }
-@keyframes float1 {
-  0%, 100% { transform: rotate(45deg) translateY(0); }
-  50% { transform: rotate(45deg) translateY(-20px); }
+
+.hero__media {
+  position: absolute;
+  inset: 0 clamp(0px, 2vw, 20px);
+  overflow: hidden;
+  background:
+    repeating-linear-gradient(-60deg, rgba(201, 168, 59, 0.07) 0 18px, transparent 18px 36px),
+    radial-gradient(800px 500px at 70% 30%, rgba(201, 168, 59, 0.22), transparent 70%),
+    var(--hs-panel-solid);
 }
-@keyframes float2 {
-  0%, 100% { transform: rotate(-30deg) translateY(0); }
-  50% { transform: rotate(-30deg) translateY(20px); }
+
+.hero__img { width: 100%; height: 100%; object-fit: cover; }
+.hero__media::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, rgba(11,10,7,0.15) 0%, rgba(11,10,7,0) 40%, rgba(11,10,7,0.55) 100%);
+}
+
+.hero__title-panel {
+  position: relative;
+  align-self: end;
+  margin-bottom: clamp(32px, 6vw, 72px);
+  padding: clamp(22px, 3vw, 34px) clamp(28px, 5vw, 64px) clamp(22px, 3vw, 34px) clamp(20px, 4vw, 48px);
+  background: linear-gradient(110deg, var(--hs-gold-2), var(--hs-gold));
+  color: var(--hs-on-gold);
+  clip-path: polygon(0 0, 100% 0, 94% 100%, 0 100%);
+  max-width: 760px;
+}
+
+.hero__title { line-height: 0.92; }
+
+.hero__chip {
+  display: inline-block;
+  margin-top: 14px;
+  padding: 8px 22px 8px 16px;
+  background: var(--hs-ink);
+  color: var(--hs-cream);
+  font-size: clamp(0.85rem, 1.6vw, 1.1rem);
+  font-weight: 800;
+  font-style: italic;
+  text-transform: uppercase;
+  clip-path: polygon(4% 0, 100% 0, 96% 100%, 0 100%);
+}
+
+.hero__tonight {
+  position: relative;
+  align-self: stretch;
+  margin-top: clamp(140px, 22vh, 220px);
+  padding: 28px 28px 24px 44px;
+  background: linear-gradient(180deg, rgba(27, 24, 16, 0.92), rgba(11, 10, 7, 0.96));
+  clip-path: polygon(10% 0, 100% 0, 100% 100%, 0 100%);
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.hero__tonight-title {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  font-size: 1.5rem;
+  font-weight: 800;
+  font-style: italic;
+  text-transform: uppercase;
+}
+
+.hero__tonight-title span { font-size: 0.75rem; font-style: normal; color: var(--hs-gold-2); letter-spacing: 0.08em; }
+
+.hero__tonight-list { list-style: none; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+
+.hero__tonight-item {
+  display: flex;
+  flex-direction: column;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--hs-line);
+}
+
+.hero__tonight-name { font-weight: 700; font-size: 0.95rem; line-height: 1.3; }
+.hero__tonight-meta { font-size: 0.75rem; color: var(--hs-muted); }
+.hero__tonight-item:hover .hero__tonight-name { color: var(--hs-gold-2); }
+.hero__tonight-empty { font-size: 0.85rem; }
+.hero__tonight-more { margin-top: auto; font-size: 0.8rem; font-weight: 700; color: var(--hs-gold-2); text-transform: uppercase; letter-spacing: 0.05em; }
+
+/* ---------- This week ---------- */
+.week__inner {
+  display: grid;
+  grid-template-columns: minmax(220px, 300px) minmax(0, 1fr);
+  gap: clamp(24px, 4vw, 48px);
+  align-items: center;
+}
+
+.week__inner > * { min-width: 0; }
+.week__copy { display: flex; flex-direction: column; gap: 14px; }
+.week__arrows { display: flex; gap: 10px; margin-top: 6px; }
+
+.week__track {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: minmax(230px, 260px);
+  gap: 16px;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  padding-bottom: 6px;
+  scrollbar-width: none;
+}
+
+.week__track::-webkit-scrollbar { display: none; }
+
+.week__card {
+  scroll-snap-align: start;
+  min-height: 230px;
+  padding: 20px 22px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  background: rgba(239, 227, 179, 0.07);
+  border-left: 4px solid var(--hs-gold);
+  transition: background-color 0.2s ease;
+}
+
+.week__card:hover { background: rgba(239, 227, 179, 0.12); }
+
+.week__card--now {
+  background: linear-gradient(140deg, var(--hs-gold-2), var(--hs-gold));
+  color: var(--hs-on-gold);
+  border-left-color: transparent;
+}
+
+.week__card--now:hover { background: var(--hs-gold-2); }
+
+.week__badge { font-size: 0.72rem; opacity: 0.8; }
+
+.week__title {
+  font-size: 1.45rem;
+  font-weight: 800;
+  font-style: italic;
+  text-transform: uppercase;
+  line-height: 1.02;
+}
+
+.week__venue { font-size: 0.78rem; opacity: 0.85; }
+
+.week__when {
+  margin-top: auto;
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+/* ---------- Our venues ---------- */
+.venues {
+  display: grid;
+  grid-template-columns: minmax(260px, 0.8fr) minmax(0, 1.6fr);
+  background: linear-gradient(115deg, var(--hs-gold-2), var(--hs-gold) 70%, #A88A2A);
+  color: var(--hs-on-gold);
+  overflow: hidden;
+}
+
+.venues__copy {
+  padding: clamp(32px, 5vw, 64px) clamp(24px, 4vw, 48px);
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  justify-content: center;
+}
+
+.venues__title {
+  display: flex;
+  flex-direction: column;
+  font-size: clamp(3rem, 7vw, 5.6rem);
+  font-weight: 800;
+  font-style: italic;
+  text-transform: uppercase;
+  line-height: 0.9;
+}
+
+.venues__outline { color: transparent; -webkit-text-stroke: 2px var(--hs-on-gold); }
+.venues__cta { align-self: flex-start; }
+
+.venues__track {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: minmax(220px, 260px);
+  gap: 12px;
+  overflow-x: auto;
+  padding: 28px 28px 28px 0;
+  scroll-snap-type: x mandatory;
+  scrollbar-width: thin;
+}
+
+.venues__card {
+  position: relative;
+  min-height: 340px;
+  scroll-snap-align: start;
+  clip-path: polygon(12% 0, 100% 0, 88% 100%, 0 100%);
+  overflow: hidden;
+}
+
+.venues__photo { position: absolute; inset: 0; transition: transform 0.5s ease; }
+.venues__card:hover .venues__photo { transform: scale(1.04); }
+
+.venues__name {
+  position: absolute;
+  left: 18%;
+  right: 14%;
+  bottom: 18px;
+  padding: 8px 12px;
+  background: rgba(11, 10, 7, 0.82);
+  color: var(--hs-text);
+  font-weight: 800;
+  font-style: italic;
+  text-transform: uppercase;
+  font-size: 1.05rem;
+  line-height: 1.1;
+}
+
+/* ---------- Find your local ---------- */
+.local {
+  display: grid;
+  grid-template-columns: minmax(220px, 360px) minmax(0, 1fr);
+  gap: clamp(24px, 5vw, 64px);
+  align-items: start;
+}
+
+.local__copy { display: flex; flex-direction: column; gap: 14px; }
+
+.local__tabs { display: flex; gap: 2px; }
+
+.local__tab {
+  padding: 12px 22px;
+  border: none;
+  background: rgba(239, 227, 179, 0.06);
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.local__tab.is-active { background: rgba(239, 227, 179, 0.16); color: var(--hs-gold-2); }
+
+.local__rows { list-style: none; padding: 0; display: flex; flex-direction: column; gap: 6px; margin-top: 6px; }
+
+.local__row {
+  display: grid;
+  grid-template-columns: minmax(140px, 0.9fr) 1.2fr auto;
+  align-items: center;
+  gap: 16px;
+  padding: 18px 22px;
+  background: rgba(239, 227, 179, 0.07);
+  transition: background-color 0.2s ease;
+}
+
+.local__row:hover { background: rgba(239, 227, 179, 0.14); }
+
+.local__name { font-size: 1.15rem; font-weight: 800; font-style: italic; text-transform: uppercase; }
+.local__addr { font-size: 0.75rem; color: var(--hs-muted); text-transform: uppercase; letter-spacing: 0.04em; }
+.local__go { font-size: 1.5rem; font-weight: 700; }
+.local__none { padding: 18px 0; }
+
+/* ---------- What's on ---------- */
+.wo__heading { margin-bottom: 24px; }
+
+.wo {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 22px;
+}
+
+.wo__card { display: flex; flex-direction: column; gap: 12px; }
+.wo__photo { aspect-ratio: 16 / 9; }
+.wo__photo :deep(img) { transition: transform 0.5s ease; }
+.wo__card:hover .wo__photo :deep(img) { transform: scale(1.04); }
+.wo__text { font-size: 0.88rem; color: var(--hs-muted); }
+.wo__card:hover .wo__title { color: var(--hs-gold-2); }
+
+/* ---------- Responsive ---------- */
+@media (max-width: 960px) {
+  .hero { grid-template-columns: minmax(0, 1fr); min-height: 0; padding: 0; margin-top: -10px; }
+  .hero__media, .hero__title-panel, .hero__tonight { grid-column: 1; }
+  .hero__media { position: relative; inset: auto; grid-row: 1; height: 56vh; min-height: 340px; }
+  .hero__title-panel { grid-row: 1; align-self: end; margin: 0 0 24px; max-width: 94%; min-width: 0; }
+  .hero__title { font-size: clamp(1.9rem, 9vw, 3.2rem); overflow-wrap: anywhere; }
+  .hero__tonight { grid-row: 2; margin: 0; clip-path: none; padding: 24px var(--hs-gutter); }
+  .week__inner, .local { grid-template-columns: 1fr; }
+  .venues { grid-template-columns: 1fr; }
+  .venues__track { padding: 0 20px 28px; }
+  .wo { grid-template-columns: 1fr; }
+}
+
+@media (max-width: 560px) {
+  .local__row { grid-template-columns: 1fr auto; }
+  .local__addr { grid-column: 1; grid-row: 2; }
+  .local__go { grid-row: 1 / span 2; grid-column: 2; }
 }
 </style>

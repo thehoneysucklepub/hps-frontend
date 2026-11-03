@@ -9,12 +9,6 @@ const routes = [
     component: () => import('@/views/auth/LoginView.vue'),
     meta: { guest: true }
   },
-  {
-  path: '/register',
-  name: 'Register',
-  component: () => import('@/views/auth/RegisterView.vue'),
-  meta: { guest: true }
-},
 
   // ── Admin / Staff Dashboard ───────────────────────
   {
@@ -63,21 +57,6 @@ const routes = [
         component: () => import('@/views/admin/AuditLogsView.vue'),
         meta: { requiresSuperAdmin: true }
       },
-      {
-  path: 'bookings',
-  name: 'AdminBookings',
-  component: () => import('@/views/admin/BookingsView.vue')
-},
-{
-  path: 'reservations',
-  name: 'AdminReservations',
-  component: () => import('@/views/admin/ReservationsView.vue')
-},
-{
-  path: 'staff',
-  name: 'StaffDashboard',
-  component: () => import('@/views/admin/StaffView.vue')
-},
     ]
   },
 
@@ -86,77 +65,22 @@ const routes = [
     path: '/',
     component: () => import('@/layouts/PublicLayout.vue'),
     children: [
-      {
-        path: '',
-        name: 'Home',
-        component: () => import('@/views/public/HomeView.vue')
-      },
-      {
-        path: 'live-sports',
-        name: 'LiveSports',
-        component: () => import('@/views/public/LiveSportsView.vue')
-      },
-      {
-        path: 'branches',
-        name: 'Branches',
-        component: () => import('@/views/public/BranchesView.vue')
-      },
-      {
-        path: 'branches/:slug',
-        name: 'BranchDetail',
-        component: () => import('@/views/public/BranchDetailView.vue')
-      },
-      {
-        path: 'menu',
-        name: 'Menu',
-        component: () => import('@/views/public/MenuView.vue')
-      },
-      {
-        path: 'contact',
-        name: 'Contact',
-        component: () => import('@/views/public/ContactView.vue')
-      },
-      {
-        path: 'bar-x',
-        name: 'BarX',
-        component: () => import('@/views/public/BarXView.vue')
-      }
+      { path: '', name: 'Home', component: () => import('@/views/public/HomeView.vue') },
+      { path: 'branches', name: 'Branches', component: () => import('@/views/public/BranchesView.vue') },
+      { path: 'branches/:slug', name: 'BranchDetail', component: () => import('@/views/public/VenueView.vue') },
+      { path: 'whats-on', name: 'WhatsOn', component: () => import('@/views/public/WhatsOnView.vue') },
+      { path: 'menu', name: 'Menu', component: () => import('@/views/public/MenuView.vue') },
+      // Bar-X is a venue like the branches; its content is managed in Admin → Branches
+      { path: 'bar-x', name: 'BarX', component: () => import('@/views/public/VenueView.vue'), props: { slugOverride: 'bar-x' } },
     ]
   },
 
-  // ── Member Portal ─────────────────────────────────
-  {
-    path: '/member',
-    component: () => import('@/layouts/MemberLayout.vue'),
-    meta: { requiresAuth: true },
-    children: [
-      {
-        path: '',
-        name: 'MemberDashboard',
-        component: () => import('@/views/member/DashboardView.vue')
-      },
-      {
-        path: 'bookmarks',
-        name: 'MemberBookmarks',
-        component: () => import('@/views/member/BookmarksView.vue')
-      },
-      {
-  path: 'reservations',
-  name: 'MemberReservations',
-  component: () => import('@/views/member/ReservationsView.vue')
-},
-{
-  path: 'bookings',
-  name: 'MemberBookings',
-  component: () => import('@/views/member/BookingsView.vue')
-},
-{
-  path: 'profile',
-  name: 'MemberProfile',
-  component: () => import('@/views/member/ProfileView.vue')
-},
-    ]
-  },
+  // ── Retired pages: keep old links working ──────────
+  { path: '/live-sports', redirect: '/whats-on' },
+  { path: '/contact', redirect: { path: '/', hash: '#visit' } },
+  { path: '/register', redirect: '/' },
+  { path: '/member/:pathMatch(.*)*', redirect: '/' },
+  { path: '/member', redirect: '/' },
 
   // ── Catch all ─────────────────────────────────────
   {
@@ -168,7 +92,11 @@ const routes = [
 const router = createRouter({
   history: createWebHistory(),
   routes,
-  scrollBehavior: () => ({ top: 0 })
+  scrollBehavior(to, from, saved) {
+    if (saved) return saved
+    if (to.hash) return { el: to.hash, top: 80, behavior: 'smooth' }
+    return { top: 0 }
+  }
 })
 
 // ── Navigation Guards ──────────────────────────────
@@ -204,7 +132,7 @@ router.beforeEach(async (to, from, next) => {
 
   if (to.meta.guest && auth.isAuthenticated) {
     if (auth.isAdmin || auth.isStaff) return next({ name: 'AdminDashboard' })
-    return next({ name: 'MemberDashboard' })
+    return next({ name: 'Home' })
   }
 
   next()

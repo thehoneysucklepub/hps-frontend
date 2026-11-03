@@ -150,6 +150,7 @@ const loading  = ref(true)
 const statsRaw = ref({})
 const activity = ref([])
 const branches = ref([])
+const weeklyCount = ref(0)
 
 const stats = computed(() => [
   {
@@ -167,25 +168,25 @@ const stats = computed(() => [
     color: '#4CAF50'
   },
   {
-    label: 'Bookings',
-    value: statsRaw.value?.bookings?.total ?? 0,
-    sub:   `${statsRaw.value?.bookings?.pending ?? 0} pending`,
-    icon:  'mdi-calendar-check',
+    label: 'Weekly line-ups',
+    value: weeklyCount.value,
+    sub:   'Across all venues',
+    icon:  'mdi-music',
     color: '#FF9800'
   },
   {
-    label: 'Reservations',
-    value: statsRaw.value?.reservations?.total ?? 0,
-    sub:   `${statsRaw.value?.reservations?.today ?? 0} today`,
-    icon:  'mdi-table-chair',
+    label: 'Venues',
+    value: branches.value.length,
+    sub:   'Active on the website',
+    icon:  'mdi-store-outline',
     color: '#2196F3'
   }
 ])
 
 const quickActions = [
   { label: 'Add New Event',       to: '/admin/events',        icon: 'mdi-plus-circle',  color: 'primary' },
-  { label: 'Manage Bookings',     to: '/admin/bookings',      icon: 'mdi-calendar-check', color: 'warning' },
-  { label: 'Manage Reservations', to: '/admin/reservations',  icon: 'mdi-table-chair',  color: 'info' },
+  { label: 'Edit Venues',         to: '/admin/branches',      icon: 'mdi-store-edit-outline', color: 'warning' },
+  { label: 'Update Menu',         to: '/admin/menu',          icon: 'mdi-food-outline', color: 'info' },
   { label: 'Manage Users',        to: '/admin/users',         icon: 'mdi-account-group', color: 'success' },
 ]
 
@@ -217,6 +218,7 @@ function timeAgo(dateStr) {
 
 onMounted(async () => {
   try {
+    api.get('/events/weekly').then(r => { weeklyCount.value = r.data.events?.length ?? 0 }).catch(() => {})
     const [statsRes, branchRes] = await Promise.all([
       api.get('/dashboard/stats'),
       api.get('/branches')

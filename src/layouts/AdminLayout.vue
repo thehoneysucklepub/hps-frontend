@@ -13,13 +13,13 @@
       <div class="d-flex align-center justify-center pa-3" style="min-height: 64px; border-bottom: 1px solid #2A2A2A;">
         <img
           v-if="!rail"
-          src="@/assets/logo.png"
+          src="/brand/logo.webp"
           alt="HPS"
           style="height:44px;width:auto;object-fit:contain;"
         />
         <img
           v-else
-          src="@/assets/logo.png"
+          src="/brand/logo.webp"
           alt="HPS"
           style="height:30px;width:30px;object-fit:contain;"
         />
@@ -151,9 +151,7 @@ const rail         = ref(false)
 const navItems = computed(() => {
   const base = [
     { name: 'Dashboard',    to: '/admin',             icon: 'mdi-view-dashboard-outline' },
-    { name: 'Events',       to: '/admin/events',       icon: 'mdi-calendar-star' },
-    { name: 'Bookings',     to: '/admin/bookings',     icon: 'mdi-calendar-check' },
-    { name: 'Reservations', to: '/admin/reservations', icon: 'mdi-table-chair' },
+    { name: 'Events & Line-ups', to: '/admin/events',  icon: 'mdi-calendar-star' },
   ]
 
   if (auth.can_manage || auth.isAdmin) {
