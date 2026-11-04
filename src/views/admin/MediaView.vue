@@ -8,10 +8,23 @@
           Manage images and videos across all branches
         </div>
       </div>
-      <v-btn color="primary" prepend-icon="mdi-plus" size="small"
-        style="color:#0A0A0A;font-weight:700;" @click="openCreate">
-        Add Media
-      </v-btn>
+      <div class="d-flex ga-2">
+        <v-btn variant="tonal" prepend-icon="mdi-link-variant" size="small" @click="openCreate">
+          Add by link
+        </v-btn>
+        <v-btn color="primary" prepend-icon="mdi-upload" size="small"
+          style="color:#0A0A0A;font-weight:700;" @click="openBulk">
+          Upload photos
+        </v-btn>
+      </div>
+    </div>
+
+    <SitePhotos @message="showSnack" />
+
+    <div style="font-size:12px;color:#999;margin:0 0 12px;">
+      <b>Where photos appear:</b> a photo with a branch shows in that venue's gallery (the first one is its cover
+      if it has no cover photo). <v-icon size="13" color="primary">mdi-star</v-icon> Starred photos appear first
+      in the home page gallery. Every photo appears in the home page gallery (newest 9).
     </div>
 
     <!-- View Toggle + Filters -->
@@ -71,7 +84,7 @@
           >
             <div style="height:140px;background:#1A1A1A;position:relative;overflow:hidden;">
               <img v-if="item.media_type==='image' && item.file_url"
-                :src="item.file_url" style="width:100%;height:100%;object-fit:cover;" />
+                :src="imgUrl(item.file_url)" style="width:100%;height:100%;object-fit:cover;" />
               <div v-else class="d-flex align-center justify-center" style="height:100%;">
                 <v-icon size="40" color="#333">
                   {{ item.media_type==='video' ? 'mdi-play-circle' : 'mdi-image' }}
@@ -113,7 +126,7 @@
         >
           <div style="height:160px;background:#1A1A1A;position:relative;">
             <img v-if="item.media_type==='image' && item.file_url"
-              :src="item.file_url" style="width:100%;height:100%;object-fit:cover;" />
+              :src="imgUrl(item.file_url)" style="width:100%;height:100%;object-fit:cover;" />
             <div v-else class="d-flex align-center justify-center" style="height:100%;">
               <v-icon size="48" color="#333">
                 {{ item.media_type==='video' ? 'mdi-play-circle' : 'mdi-image' }}
@@ -163,7 +176,7 @@
             <td style="padding:10px 16px;">
               <div style="width:60px;height:40px;background:#1A1A1A;border-radius:6px;overflow:hidden;">
                 <img v-if="item.file_url && item.media_type==='image'"
-                  :src="item.file_url" style="width:100%;height:100%;object-fit:cover;" />
+                  :src="imgUrl(item.file_url)" style="width:100%;height:100%;object-fit:cover;" />
                 <div v-else class="d-flex align-center justify-center" style="height:100%;">
                   <v-icon size="16" color="#555">mdi-image</v-icon>
                 </div>
@@ -205,11 +218,24 @@
         </div>
         <div style="background:#0A0A0A;min-height:400px;display:flex;align-items:center;justify-content:center;">
           <img v-if="previewItem?.media_type==='image'"
-            :src="previewItem?.file_url"
+            :src="imgUrl(previewItem?.file_url)"
             style="max-width:100%;max-height:500px;object-fit:contain;" />
           <video v-else-if="previewItem?.media_type==='video'"
-            :src="previewItem?.file_url" controls
+            :src="imgUrl(previewItem?.file_url)" controls
             style="max-width:100%;max-height:500px;" />
+        </div>
+        <div v-if="previewItem" class="pa-4 pb-0">
+          <v-row dense>
+            <v-col cols="12" sm="6">
+              <v-text-field v-model="editForm.title" label="Title" hide-details density="compact" bg-color="#1A1A1A" />
+            </v-col>
+            <v-col cols="12" sm="4">
+              <v-select v-model="editForm.branch_id" :items="branchOptions" label="Branch (gallery)" placeholder="No branch" hide-details density="compact" bg-color="#1A1A1A" clearable />
+            </v-col>
+            <v-col cols="12" sm="2" class="d-flex align-center">
+              <v-btn color="primary" size="small" :loading="saving" style="color:#0A0A0A;font-weight:700;" block @click="saveEdit">Save</v-btn>
+            </v-col>
+          </v-row>
         </div>
         <div class="pa-4 d-flex align-center justify-space-between">
           <div>
@@ -280,6 +306,35 @@
       </v-card>
     </v-dialog>
 
+    <!-- Upload photos (saved straight away) -->
+    <v-dialog v-model="bulkDialog" max-width="520" :persistent="bulkBusy">
+      <v-card style="background:#111111;border:1px solid #2A2A2A;">
+        <div class="d-flex align-center justify-space-between pa-5 pb-4" style="border-bottom:1px solid #2A2A2A;">
+          <div style="font-size:17px;font-weight:700;">Upload photos</div>
+          <v-btn icon="mdi-close" variant="text" size="small" :disabled="bulkBusy" @click="bulkDialog = false" />
+        </div>
+        <div class="pa-5">
+          <v-select v-model="bulk.branch_id" :items="branchOptions" label="Branch (shows in its gallery)" placeholder="No branch: home gallery only"
+            hide-details density="compact" bg-color="#1A1A1A" class="mb-3" clearable :disabled="bulkBusy" />
+          <v-switch v-model="bulk.featured" label="Star them (first in the home page gallery)" color="primary" hide-details density="compact" :disabled="bulkBusy" />
+          <v-file-input v-model="bulk.files" label="Choose photos" accept="image/jpeg,image/png,image/webp,image/gif" multiple chips
+            prepend-icon="" prepend-inner-icon="mdi-image-multiple" hide-details density="compact" bg-color="#1A1A1A" class="mt-3" :disabled="bulkBusy" />
+          <div style="font-size:11px;color:#777;margin-top:6px;">JPG, PNG, WebP or GIF, up to 8 MB each. Each photo is saved as soon as it uploads.</div>
+          <div v-if="bulkBusy || bulkDone" class="mt-4">
+            <v-progress-linear :model-value="bulkProgress" color="primary" height="6" rounded />
+            <div style="font-size:12px;color:#aaa;margin-top:6px;">{{ bulkStatus }}</div>
+          </div>
+          <v-alert v-for="(e, i) in bulkErrors" :key="i" type="error" variant="tonal" density="compact" class="mt-2">{{ e }}</v-alert>
+        </div>
+        <div class="d-flex justify-end ga-2 pa-5 pt-0">
+          <v-btn variant="text" :disabled="bulkBusy" @click="bulkDialog = false">Close</v-btn>
+          <v-btn color="primary" :loading="bulkBusy" :disabled="!bulkFiles.length" style="color:#0A0A0A;font-weight:700;" @click="runBulk">
+            Upload {{ bulkFiles.length || '' }}
+          </v-btn>
+        </div>
+      </v-card>
+    </v-dialog>
+
     <!-- Delete Confirm -->
     <v-dialog v-model="deleteDialog" max-width="400">
       <v-card style="background:#111111;border:1px solid #2A2A2A;">
@@ -304,8 +359,10 @@
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
-import api, { errorText } from '@/services/api'
+import api, { errorText, uploadFile } from '@/services/api'
 import UploadButton from '@/components/admin/UploadButton.vue'
+import SitePhotos from '@/components/admin/SitePhotos.vue'
+import { imgUrl } from '@/utils/img'
 
 const allMedia      = ref([])
 const groupedMedia  = ref([])
@@ -332,9 +389,80 @@ const form = ref({
 
 const branchOptions = computed(() => branches.value.map(b => ({ title: b.name, value: b.id })))
 
+const editForm = ref({ title: '', branch_id: null })
+
 function openPreview(item) {
   previewItem.value  = item
+  editForm.value = { title: item.title || '', branch_id: item.branch_id || null }
   previewDialog.value = true
+}
+
+async function saveEdit() {
+  saving.value = true
+  try {
+    await api.put(`/media_items/${previewItem.value.id}`, { title: editForm.value.title, branch_id: editForm.value.branch_id || '' })
+    showSnack('Photo updated')
+    previewDialog.value = false
+    fetchMedia()
+  } catch (err) {
+    showSnack(errorText(err, 'Could not update the photo'), 'error')
+  } finally {
+    saving.value = false
+  }
+}
+
+// ----- Upload photos: each file is uploaded and added to the library at once -----
+const bulkDialog = ref(false)
+const bulkBusy = ref(false)
+const bulkDone = ref(false)
+const bulkProgress = ref(0)
+const bulkStatus = ref('')
+const bulkErrors = ref([])
+const bulk = ref({ branch_id: null, featured: false, files: [] })
+const bulkFiles = computed(() => (Array.isArray(bulk.value.files) ? bulk.value.files : bulk.value.files ? [bulk.value.files] : []))
+
+function openBulk() {
+  bulk.value = { branch_id: branchFilter.value || null, featured: false, files: [] }
+  bulkErrors.value = []
+  bulkDone.value = false
+  bulkProgress.value = 0
+  bulkDialog.value = true
+}
+
+async function runBulk() {
+  const files = [...bulkFiles.value]
+  bulkBusy.value = true
+  bulkDone.value = false
+  bulkErrors.value = []
+  let ok = 0
+  for (let i = 0; i < files.length; i++) {
+    const f = files[i]
+    bulkStatus.value = `Uploading ${i + 1} of ${files.length}: ${f.name}`
+    try {
+      if (f.size > 8 * 1024 * 1024) throw new Error('is larger than 8 MB')
+      const up = await uploadFile('/files', f, { purpose: 'photo' })
+      await api.post('/media_items', {
+        title: f.name.replace(/\.[a-z0-9]+$/i, '').replace(/[-_]+/g, ' '),
+        media_type: 'image',
+        file_url: up.data.url,
+        branch_id: bulk.value.branch_id || null,
+        featured: bulk.value.featured,
+      })
+      ok++
+    } catch (err) {
+      bulkErrors.value.push(`${f.name}: ${err.response ? errorText(err) : err.message}`)
+    }
+    bulkProgress.value = Math.round(((i + 1) / files.length) * 100)
+  }
+  bulkBusy.value = false
+  bulkDone.value = true
+  bulkStatus.value = `${ok} of ${files.length} photos saved`
+  bulk.value.files = []
+  if (ok) {
+    showSnack(`${ok} photo${ok === 1 ? '' : 's'} saved`)
+    fetchMedia()
+  }
+  if (!bulkErrors.value.length) bulkDialog.value = false
 }
 
 function openCreate() {

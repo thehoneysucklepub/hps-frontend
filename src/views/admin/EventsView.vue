@@ -160,7 +160,7 @@
           <div style="height:160px;background:#1A1A1A;position:relative;overflow:hidden;">
             <img
               v-if="event.image_url"
-              :src="event.image_url"
+              :src="imgUrl(event.image_url)"
               :alt="event.title"
               style="width:100%;height:100%;object-fit:cover;"
             />
@@ -483,14 +483,20 @@
               />
             </v-col>
             <v-col cols="12">
-              <v-text-field
-                v-model="form.image_url"
-                label="Image URL"
-                hide-details
-                density="compact"
-                bg-color="#1A1A1A"
-                class="mb-3"
-              />
+              <div class="d-flex align-center ga-2 mb-3">
+                <v-text-field
+                  v-model="form.image_url"
+                  label="Photo"
+                  placeholder="Upload, or paste an image link"
+                  hide-details
+                  density="compact"
+                  bg-color="#1A1A1A"
+                  clearable
+                  style="flex:1;"
+                />
+                <UploadButton label="Upload" @uploaded="onPhotoUploaded" @error="msg => (formError = msg)" />
+              </div>
+              <img v-if="form.image_url" :src="imgUrl(form.image_url)" alt="" style="width:100%;max-height:160px;object-fit:cover;border-radius:8px;margin:-4px 0 12px;" />
             </v-col>
             <v-col cols="6">
               <v-switch
@@ -568,7 +574,9 @@
 import { ref, computed, onMounted } from 'vue'
 import { useEventsStore } from '@/stores/events.store'
 import { useAuthStore } from '@/stores/auth.store'
-import api from '@/services/api'
+import api, { errorText } from '@/services/api'
+import UploadButton from '@/components/admin/UploadButton.vue'
+import { imgUrl } from '@/utils/img'
 
 const store   = useEventsStore()
 const auth    = useAuthStore()
@@ -593,6 +601,19 @@ const filters = ref({
 
 const form = ref(defaultForm())
 const snackbar = ref({ show: false, text: '', color: 'success' })
+
+// Editing an existing event: save the uploaded photo straight away
+async function onPhotoUploaded(url) {
+  form.value.image_url = url
+  if (!editingEvent.value) return
+  try {
+    await api.put(`/events/${editingEvent.value.id}`, { image_url: url })
+    editingEvent.value.image_url = url
+    snackbar.value = { show: true, text: 'Photo saved', color: 'success' }
+  } catch (err) {
+    formError.value = errorText(err, 'Photo uploaded but not saved: click Save Changes')
+  }
+}
 
 function defaultForm() {
   return {

@@ -37,6 +37,11 @@ const routes = [
         component: () => import('@/views/admin/BranchesView.vue')
       },
       {
+        path: 'bar-x',
+        name: 'AdminBarX',
+        component: () => import('@/views/admin/BarXView.vue')
+      },
+      {
         path: 'menu',
         name: 'AdminMenu',
         component: () => import('@/views/admin/MenuView.vue')

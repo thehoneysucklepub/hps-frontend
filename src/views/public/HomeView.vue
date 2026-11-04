@@ -140,6 +140,28 @@
     </section>
 
     <!-- ============ WHAT'S ON ============ -->
+    <!-- ============ GALLERY (Admin → Media; starred photos first) ============ -->
+    <section v-if="site.galleryPhotos.length" class="hs-section" aria-labelledby="gallery-title">
+      <div class="hs-wrap">
+        <h2 id="gallery-title" class="hs-kicker gal__heading">Inside Honeysuckle</h2>
+        <ul class="gal" :class="`gal--${Math.min(site.galleryPhotos.length, 5)}`">
+          <li v-for="(p, i) in site.galleryPhotos" :key="p.id" class="gal__item" :class="{ 'gal__item--big': i === 0 }">
+            <button type="button" class="gal__btn" :aria-label="`Open photo${p.title ? ': ' + p.title : ''}`" @click="openPhoto(i)">
+              <VenuePhoto :src="p.thumbnail_url || p.file_url" :alt="p.title || p.branch_name || 'The Honeysuckle Pub'" />
+              <span v-if="p.branch_name" class="gal__tag">{{ p.branch_name }}</span>
+            </button>
+          </li>
+        </ul>
+      </div>
+    </section>
+
+    <div v-if="photoIndex !== null" class="lightbox" role="dialog" aria-modal="true" aria-label="Photo" @click.self="photoIndex = null">
+      <button type="button" class="lightbox__btn lightbox__close" aria-label="Close" @click="photoIndex = null">×</button>
+      <button v-if="site.galleryPhotos.length > 1" type="button" class="lightbox__btn lightbox__prev" aria-label="Previous photo" @click="stepPhoto(-1)">‹</button>
+      <img :src="imgUrl(site.galleryPhotos[photoIndex].file_url)" :alt="site.galleryPhotos[photoIndex].title || 'The Honeysuckle Pub'" class="lightbox__img" />
+      <button v-if="site.galleryPhotos.length > 1" type="button" class="lightbox__btn lightbox__next" aria-label="Next photo" @click="stepPhoto(1)">›</button>
+    </div>
+
     <section class="hs-section" aria-labelledby="wo-title">
       <div class="hs-wrap">
         <h2 id="wo-title" class="hs-kicker wo__heading">What's on</h2>
@@ -156,8 +178,9 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, nextTick, watch } from 'vue'
+import { ref, computed, onMounted, onBeforeUnmount, nextTick, watch } from 'vue'
 import VenuePhoto from '@/components/site/VenuePhoto.vue'
+import { imgUrl } from '@/utils/img'
 import { useSiteStore, DAY_NAMES, DAY_SHORT, clock, timeRange } from '@/stores/site.store'
 import { useTonight } from '@/composables/useTonight'
 
@@ -165,13 +188,13 @@ const site = useSiteStore()
 const { nightDay, nextSeven } = useTonight()
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
 
-// Hero: a featured photo from Admin → Media; until there is one, the image the
-// current live site already uses.
+// Hero: Admin → Media → Website photos → Home page; else the first starred
+// photo in Admin → Media; until there is one, the image the old site used.
 const HERO_FALLBACK = 'https://images.unsplash.com/photo-1574096079513-d8259312b785?w=1800&q=80'
 const heroFailed = ref(false)
 const heroImage = computed(() => {
   if (heroFailed.value) return '' // plain branded backdrop
-  return site.featuredPhotos[0]?.file_url || HERO_FALLBACK
+  return imgUrl(site.pageImage('home_hero') || site.featuredPhotos[0]?.file_url || HERO_FALLBACK)
 })
 
 const tonight = computed(() => site.onDay(nightDay.value))
@@ -214,13 +237,13 @@ const whatsOn = computed(() => [
     to: '/whats-on',
     title: 'Weekly line-ups',
     text: 'Every DJ, band and karaoke night at every branch, day by day.',
-    image: site.featuredPhotos[1]?.file_url || '',
+    image: site.pageImage('whats_on') || site.featuredPhotos[1]?.file_url || '',
   },
   {
     to: '/menu',
     title: 'Food & drinks',
     text: 'Our current food and drinks menus, ready to view or download.',
-    image: site.featuredPhotos[2]?.file_url || '',
+    image: site.pageImage('menu') || site.featuredPhotos[2]?.file_url || '',
   },
   {
     to: '/bar-x',
@@ -230,13 +253,99 @@ const whatsOn = computed(() => [
   },
 ])
 
+// Gallery lightbox
+const photoIndex = ref(null)
+const openPhoto = (i) => { photoIndex.value = i }
+const stepPhoto = (d) => {
+  const n = site.galleryPhotos.length
+  photoIndex.value = (photoIndex.value + d + n) % n
+}
+const onKey = (e) => {
+  if (photoIndex.value === null) return
+  if (e.key === 'Escape') photoIndex.value = null
+  if (e.key === 'ArrowRight') stepPhoto(1)
+  if (e.key === 'ArrowLeft') stepPhoto(-1)
+}
+
 onMounted(() => {
   site.loadWeekly()
   site.loadMedia()
+  window.addEventListener('keydown', onKey)
 })
+onBeforeUnmount(() => window.removeEventListener('keydown', onKey))
 </script>
 
 <style scoped>
+/* ---------- Gallery ---------- */
+.gal__heading { margin-bottom: 20px; }
+
+.gal {
+  list-style: none;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-auto-rows: clamp(140px, 17vw, 230px);
+  gap: 10px;
+}
+
+.gal--1 { grid-template-columns: 1fr; grid-auto-rows: clamp(220px, 40vw, 460px); }
+.gal--2 { grid-template-columns: repeat(2, minmax(0, 1fr)); grid-auto-rows: clamp(200px, 28vw, 360px); }
+.gal__item--big { grid-column: span 2; grid-row: span 2; }
+.gal--1 .gal__item--big, .gal--2 .gal__item--big { grid-column: auto; grid-row: auto; }
+
+.gal__btn { position: relative; display: block; width: 100%; height: 100%; padding: 0; border: none; background: none; cursor: zoom-in; }
+.gal__btn .hs-photo { width: 100%; height: 100%; }
+.gal__btn:hover .hs-photo { filter: brightness(1.08); }
+
+.gal__tag {
+  position: absolute;
+  left: 0;
+  bottom: 12px;
+  padding: 6px 14px 6px 12px;
+  background: var(--hs-gold);
+  color: var(--hs-on-gold);
+  font-size: 0.72rem;
+  font-weight: 800;
+  font-style: italic;
+  text-transform: uppercase;
+  clip-path: polygon(0 0, 100% 0, 92% 100%, 0 100%);
+}
+
+.lightbox {
+  position: fixed;
+  inset: 0;
+  z-index: 80;
+  background: rgba(5, 5, 4, 0.95);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 70px;
+}
+
+.lightbox__img { max-width: 100%; max-height: 100%; object-fit: contain; }
+
+.lightbox__btn {
+  position: absolute;
+  width: 48px;
+  height: 48px;
+  border: none;
+  background: rgba(239, 227, 179, 0.12);
+  font-size: 28px;
+  line-height: 1;
+}
+
+.lightbox__btn:hover { background: var(--hs-gold); color: var(--hs-on-gold); }
+.lightbox__close { top: 16px; right: 16px; }
+.lightbox__prev { left: 12px; top: 50%; transform: translateY(-50%); }
+.lightbox__next { right: 12px; top: 50%; transform: translateY(-50%); }
+
+@media (max-width: 760px) {
+  .gal { grid-template-columns: repeat(2, minmax(0, 1fr)); grid-auto-rows: 42vw; }
+  .gal--1 { grid-template-columns: 1fr; grid-auto-rows: 62vw; }
+  .gal__item--big { grid-column: span 2; grid-row: span 1; }
+  .lightbox { padding: 60px 12px; }
+}
+
 /* ---------- Hero ---------- */
 .hero {
   position: relative;

@@ -26,7 +26,7 @@
       <v-col v-for="branch in branches" :key="branch.id" cols="12" sm="6" lg="4">
         <v-card style="background:#111111;border:1px solid #2A2A2A;" class="pa-5">
           <div v-if="branch.image_url" style="margin:-20px -20px 16px;height:120px;overflow:hidden;border-radius:4px 4px 0 0;">
-            <img :src="branch.image_url" alt="" style="width:100%;height:100%;object-fit:cover;" />
+            <img :src="imgUrl(branch.image_url)" alt="" style="width:100%;height:100%;object-fit:cover;" />
           </div>
           <div class="d-flex align-center justify-space-between mb-4">
             <div class="d-flex align-center ga-3">
@@ -108,86 +108,7 @@
           <v-tab value="sections">Page sections</v-tab>
         </v-tabs>
         <v-card-text class="pa-5" style="max-height:70vh;">
-          <v-window v-model="dialogTab">
-            <!-- Details -->
-            <v-window-item value="details">
-              <v-row dense>
-                <v-col cols="12" sm="8">
-                  <v-text-field v-model="form.name" label="Name *" hide-details density="compact" bg-color="#1A1A1A" />
-                </v-col>
-                <v-col cols="12" sm="4">
-                  <v-select v-model="form.venue_type" :items="venueTypes" label="Type" hide-details density="compact" bg-color="#1A1A1A" />
-                </v-col>
-                <v-col cols="12">
-                  <v-text-field v-model="form.address" label="Address" hide-details density="compact" bg-color="#1A1A1A" />
-                </v-col>
-                <v-col cols="6">
-                  <v-text-field v-model="form.phone_primary" label="Primary phone" hide-details density="compact" bg-color="#1A1A1A" />
-                </v-col>
-                <v-col cols="6">
-                  <v-text-field v-model="form.phone_secondary" label="Second phone" hide-details density="compact" bg-color="#1A1A1A" />
-                </v-col>
-                <v-col cols="4">
-                  <v-text-field v-model="form.established_year" label="Est. year" hide-details density="compact" bg-color="#1A1A1A" />
-                </v-col>
-                <v-col cols="4">
-                  <v-text-field v-model.number="form.position" type="number" label="Display order" hide-details density="compact" bg-color="#1A1A1A" />
-                </v-col>
-                <v-col cols="4" class="d-flex align-center">
-                  <v-switch v-model="form.active" label="Shown on website" color="primary" hide-details density="compact" />
-                </v-col>
-                <v-col cols="12">
-                  <v-text-field v-model="form.tagline" label="Tagline (under the name)" hide-details density="compact" bg-color="#1A1A1A" />
-                </v-col>
-                <v-col cols="12">
-                  <div class="d-flex align-center ga-2 flex-wrap">
-                    <v-text-field v-model="form.image_url" label="Cover photo" placeholder="Upload, or paste an image link" hide-details density="compact" bg-color="#1A1A1A" style="flex:1;min-width:220px;" clearable />
-                    <UploadButton label="Upload" @uploaded="url => (form.image_url = url)" @error="msg => (formError = msg)" />
-                  </div>
-                  <img v-if="form.image_url" :src="form.image_url" alt="" style="width:100%;max-height:180px;object-fit:cover;border-radius:8px;margin-top:8px;" />
-                  <div v-else style="font-size:11px;color:#777;margin-top:4px;">No cover yet: the page uses the first gallery photo (Admin → Media), or the Honeysuckle logo.</div>
-                </v-col>
-                <v-col cols="12">
-                  <v-textarea v-model="form.description" label="About (blank line = new paragraph)" hide-details density="compact" bg-color="#1A1A1A" rows="3" auto-grow />
-                </v-col>
-                <v-col cols="12" sm="6">
-                  <v-textarea v-model="form.opening_hours" label="Opening hours (one line each)" hide-details density="compact" bg-color="#1A1A1A" rows="3" auto-grow />
-                </v-col>
-                <v-col cols="12" sm="6">
-                  <v-text-field v-model="form.map_url" label="Google Maps link" hide-details density="compact" bg-color="#1A1A1A" />
-                  <div style="font-size:11px;color:#777;margin-top:4px;">Empty: the page searches Google Maps for the address.</div>
-                </v-col>
-              </v-row>
-            </v-window-item>
-
-            <!-- Page sections -->
-            <v-window-item value="sections">
-              <div style="font-size:12px;color:#999;margin-bottom:14px;">
-                Optional extra sections for this venue's page (used by Bar-X). Empty sections are not shown.
-              </div>
-              <v-row dense>
-                <v-col cols="12">
-                  <v-text-field v-model="form.eyebrow" label="Small line above the name" placeholder="e.g. Premium experience · The Honeysuckle Pub" hide-details density="compact" bg-color="#1A1A1A" />
-                </v-col>
-                <v-col cols="12">
-                  <v-text-field v-model="form.story_title" label="Story heading" hide-details density="compact" bg-color="#1A1A1A" />
-                </v-col>
-                <v-col cols="12">
-                  <v-textarea v-model="form.story" label="Story (blank line = new paragraph)" hide-details density="compact" bg-color="#1A1A1A" rows="3" auto-grow />
-                </v-col>
-              </v-row>
-              <v-divider class="my-4" style="border-color:#2A2A2A;" />
-              <RowsEditor v-model="form.stats" title="Numbers band" hint="Shown in a gold band under the photo, e.g. 50+ / Signature cocktails" :max="6"
-                :fields="[{ key: 'value', label: 'Number', width: '120px' }, { key: 'label', label: 'Label' }]" />
-              <v-divider class="my-4" style="border-color:#2A2A2A;" />
-              <RowsEditor v-model="form.features" title="What we offer" hint="Cards under the story"
-                :fields="[{ key: 'title', label: 'Title' }, { key: 'text', label: 'Text', multiline: true }]" />
-              <v-divider class="my-4" style="border-color:#2A2A2A;" />
-              <v-text-field v-model="form.signatures_title" label="Signature list heading" placeholder="e.g. Signature cocktails" hide-details density="compact" bg-color="#1A1A1A" class="mb-3" />
-              <RowsEditor v-model="form.signatures" title="Signature list" hint="Name, short description and price (85 is shown as GHS 85)"
-                :fields="[{ key: 'name', label: 'Name' }, { key: 'price', label: 'Price', width: '110px' }, { key: 'text', label: 'Description', multiline: true }]" />
-            </v-window-item>
-          </v-window>
+          <BranchEditor :form="form" :tab="dialogTab" @cover-uploaded="onCoverUploaded" @error="msg => (formError = msg)" />
           <v-alert v-if="formError" type="error" variant="tonal" density="compact" class="mt-3">{{ formError }}</v-alert>
         </v-card-text>
         <div class="d-flex justify-end ga-2 pa-5 pt-3" style="border-top:1px solid #2A2A2A;">
@@ -225,8 +146,9 @@
 import { ref, onMounted } from 'vue'
 import { useAuthStore } from '@/stores/auth.store'
 import api, { errorText } from '@/services/api'
-import UploadButton from '@/components/admin/UploadButton.vue'
-import RowsEditor from '@/components/admin/RowsEditor.vue'
+import BranchEditor from '@/components/admin/BranchEditor.vue'
+import { blankBranch, branchToForm } from '@/utils/branchForm'
+import { imgUrl } from '@/utils/img'
 
 const auth    = useAuthStore()
 const branches = ref([])
@@ -244,20 +166,8 @@ const dialogTab      = ref('details')
 const LIST_FIELDS = ['stats', 'features', 'signatures']
 const sectionCount = (b) => LIST_FIELDS.filter(k => b[k]?.length).length + (b.story ? 1 : 0)
 
+const defaultForm = blankBranch
 const form = ref(defaultForm())
-function defaultForm() {
-  return {
-    name: '', address: '', phone_primary: '', phone_secondary: '', established_year: '', description: '', active: true,
-    image_url: '', tagline: '', opening_hours: '', map_url: '', venue_type: 'pub', position: 0,
-    eyebrow: '', story_title: '', story: '', signatures_title: '', stats: [], features: [], signatures: [],
-  }
-}
-
-const venueTypes = [
-  { title: 'Pub', value: 'pub' },
-  { title: 'Bar / lounge', value: 'bar' },
-  { title: 'Restaurant', value: 'restaurant' },
-]
 
 function openCreate() {
   editingBranch.value = null
@@ -269,14 +179,25 @@ function openCreate() {
 
 function openEdit(branch) {
   editingBranch.value = branch
-  const blank = defaultForm()
-  form.value = Object.fromEntries(Object.keys(blank).map(k => {
-    const v = branch[k] ?? blank[k]
-    return [k, Array.isArray(v) ? v.map(r => ({ ...r })) : v]
-  }))
+  form.value = branchToForm(branch)
   formError.value = null
   dialogTab.value = 'details'
   dialog.value = true
+}
+
+// Editing an existing venue: the new cover photo is saved straight away,
+// so it is not lost if the page is refreshed before "Save Changes".
+async function onCoverUploaded(url) {
+  form.value.image_url = url
+  if (!editingBranch.value) return
+  try {
+    await api.put(`/branches/${editingBranch.value.id}`, { image_url: url })
+    editingBranch.value.image_url = url
+    showSnack('Cover photo saved')
+    fetchBranches()
+  } catch (err) {
+    formError.value = errorText(err, 'Photo uploaded but not saved: click Save Changes')
+  }
 }
 
 function closeDialog() {

@@ -38,7 +38,6 @@
 
     <div class="hs-wrap hs-footer__bottom">
       <span>&copy; {{ year }} {{ site.siteName }}</span>
-      <router-link to="/login" class="hs-footer__staff">Staff login</router-link>
     </div>
   </footer>
 </template>
@@ -146,7 +145,6 @@ const venueLink = (b) => (b.slug === 'bar-x' ? '/bar-x' : `/branches/${b.slug}`)
   color: var(--hs-muted);
 }
 
-.hs-footer__staff:hover { color: var(--hs-text); }
 
 @media (max-width: 860px) {
   .hs-footer__top { grid-template-columns: 1fr; }

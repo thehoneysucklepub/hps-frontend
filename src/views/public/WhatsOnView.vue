@@ -1,6 +1,6 @@
 <template>
   <div>
-    <PageHead kicker="Weekly line-ups" title="What's on" lede="DJs, live bands, karaoke and offers at every Honeysuckle, night by night." />
+    <PageHead :image="site.pageImage('whats_on')" kicker="Weekly line-ups" title="What's on" lede="DJs, live bands, karaoke and offers at every Honeysuckle, night by night." />
 
     <section class="hs-section wo-page">
       <div class="hs-wrap">
@@ -68,7 +68,8 @@
         <section v-if="site.upcoming.length" class="special" aria-labelledby="special-title">
           <h2 id="special-title" class="hs-kicker">Coming up</h2>
           <ul class="special__list">
-            <li v-for="e in site.upcoming" :key="e.id" class="special__item">
+            <li v-for="e in site.upcoming" :key="e.id" class="special__item" :class="{ 'special__item--photo': e.image_url }">
+              <VenuePhoto v-if="e.image_url" :src="e.image_url" :alt="e.title" class="special__photo" />
               <span class="special__date">{{ formatDate(e.date_start) }}<template v-if="e.time_local"> | {{ clock(e.time_local) }}</template></span>
               <span class="special__title">{{ e.title }}</span>
               <span class="hs-muted">{{ e.branch_name || 'All venues' }}</span>
@@ -83,6 +84,7 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import PageHead from '@/components/site/PageHead.vue'
+import VenuePhoto from '@/components/site/VenuePhoto.vue'
 import { useSiteStore, DAY_NAMES, DAY_SHORT, WEEK_ORDER, timeRange, clock } from '@/stores/site.store'
 import { useTonight } from '@/composables/useTonight'
 
@@ -203,6 +205,9 @@ onMounted(() => {
   border-left: 4px solid var(--hs-gold);
 }
 
+.special__item--photo { grid-template-columns: 120px 200px 1fr auto; align-items: center; }
+.special__photo { width: 120px; aspect-ratio: 4 / 3; }
+
 .special__date { font-size: 0.8rem; font-weight: 700; color: var(--hs-gold-2); text-transform: uppercase; }
 .special__title { font-weight: 700; }
 
@@ -215,5 +220,6 @@ onMounted(() => {
   .item { grid-template-columns: 1fr; gap: 4px; }
   .item__tags { justify-content: flex-start; }
   .special__item { grid-template-columns: 1fr; gap: 4px; }
+  .special__photo { width: 100%; aspect-ratio: 16 / 9; }
 }
 </style>

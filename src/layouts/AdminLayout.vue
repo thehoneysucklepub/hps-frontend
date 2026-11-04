@@ -158,6 +158,7 @@ const navItems = computed(() => {
     base.push(
       { name: 'Users',    to: '/admin/users',    icon: 'mdi-account-group-outline' },
       { name: 'Branches', to: '/admin/branches', icon: 'mdi-store-outline' },
+      { name: 'Bar-X',    to: '/admin/bar-x',    icon: 'mdi-glass-cocktail' },
       { name: 'Menu',     to: '/admin/menu',     icon: 'mdi-food-outline' },
       { name: 'Media',    to: '/admin/media',    icon: 'mdi-image-multiple-outline' },
       { name: 'Settings', to: '/admin/settings', icon: 'mdi-cog-outline' },
@@ -172,6 +173,7 @@ const pageTitles = {
   AdminEvents:       'Events',
   AdminUsers:        'User Management',
   AdminBranches:     'Branch Management',
+  AdminBarX:         'Bar-X',
   AdminMenu:         'Menu Management',
   AdminMedia:        'Media Library',
   AdminSettings:     'Site Settings',

@@ -1,6 +1,6 @@
 <template>
   <div>
-    <PageHead kicker="Our locations" title="Branches" lede="Sports bars, pubs and lounges across Accra. Choose a venue for its weekly line-up, photos and contacts.">
+    <PageHead :image="site.pageImage('branches')" kicker="Our locations" title="Branches" lede="Sports bars, pubs and lounges across Accra. Choose a venue for its weekly line-up, photos and contacts.">
       <div v-if="filters.length > 1" class="filters" role="tablist" aria-label="Venue type">
         <button
           v-for="f in filters"

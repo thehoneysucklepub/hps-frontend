@@ -146,11 +146,22 @@ export const useSiteStore = defineStore('site', () => {
 
   const featuredPhotos = computed(() => media.value.filter(m => m.featured && m.file_url))
 
+  /** Website photo for a page (Admin → Media → Website photos): home_hero, branches, whats_on, menu */
+  const pageImage = (key) => settings.value[`image_${key}`] || ''
+
+  /** Photos for the home gallery: starred ones first, then the newest others */
+  const galleryPhotos = computed(() => {
+    const all = media.value.filter(m => m.file_url && m.media_type !== 'video')
+    const starred = all.filter(m => m.featured)
+    const rest = all.filter(m => !m.featured).sort((a, b) => String(b.created_at).localeCompare(String(a.created_at)))
+    return [...starred, ...rest].slice(0, 9)
+  })
+
   return {
     settings, branches, weekly, upcoming, menuPdfs, menuCategories, media,
     loaded, loading, errors,
     loadSettings, loadBranches, loadWeekly, loadUpcoming, loadMenu, loadMedia, retry,
     siteName, tagline, instagram, instagramHandle, venues, pubs, bars,
-    branchBySlug, weeklyFor, onDay, photosFor, coverFor, featuredPhotos,
+    branchBySlug, weeklyFor, onDay, photosFor, coverFor, featuredPhotos, pageImage, galleryPhotos,
   }
 })
