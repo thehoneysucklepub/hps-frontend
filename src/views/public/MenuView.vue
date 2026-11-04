@@ -1,6 +1,6 @@
 <template>
   <div>
-    <PageHead kicker="Food & drinks" title="Menu" lede="Our current food and drinks menus. Read them here or download them to your phone." />
+    <PageHead :image="site.pageImage('menu')" kicker="Food & drinks" title="Menu" lede="Our current food and drinks menus. Read them here or download them to your phone." />
 
     <section class="hs-section">
       <div class="hs-wrap">
